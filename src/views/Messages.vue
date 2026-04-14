@@ -150,6 +150,7 @@ import { useRouter } from 'vue-router'
 import { useNotificationsStore } from '../stores/notifications'
 import { useAuthStore } from '../stores/auth'
 import apiService, { resolveAssetUrl } from '../api'
+import { isImageAvatar, getAvatarText, formatDateZh } from '../utils/presentation'
 
 const router = useRouter()
 const notificationsStore = useNotificationsStore()
@@ -174,20 +175,7 @@ let feedbackTimer = null
 
 const activePeer = computed(() => conversations.value.find((item) => Number(item.peer_id) === Number(activePeerId.value))?.peer || null)
 
-const formatTime = (dateStr) => {
-  const d = new Date(dateStr)
-  if (Number.isNaN(d.getTime())) return '--'
-  return d.toLocaleString('zh-CN', { hour12: false })
-}
-
-const isImageAvatar = (avatar) => typeof avatar === 'string' && /^(https?:\/\/|\/uploads\/|data:image\/)/i.test(avatar)
-
-const getAvatarText = (avatar, username) => {
-  if (isImageAvatar(avatar)) return (username || 'U').charAt(0).toUpperCase()
-  const trimmed = typeof avatar === 'string' ? avatar.trim() : ''
-  if (trimmed) return trimmed.charAt(0).toUpperCase()
-  return (username || 'U').charAt(0).toUpperCase()
-}
+const formatTime = (dateStr) => formatDateZh(dateStr, { withTime: true })
 
 const setFeedback = (text, type = 'success') => {
   feedbackText.value = text
@@ -414,7 +402,7 @@ onUnmounted(() => {
 .messages-page {
   max-width: var(--layout-max-width);
   margin: 0 auto;
-  padding: 22px var(--layout-gutter) calc(88px + var(--safe-bottom));
+  padding: 22px var(--layout-gutter) var(--app-page-bottom-2xl);
 }
 
 .feedback-banner {
@@ -811,7 +799,7 @@ onUnmounted(() => {
 
 @media (max-width: 768px) {
   .messages-page {
-    padding: 18px var(--layout-gutter-mobile) calc(88px + var(--safe-bottom));
+    padding: 18px var(--layout-gutter-mobile) calc(var(--app-page-bottom-padding-mobile) + 8px);
   }
 
   .messages-header {

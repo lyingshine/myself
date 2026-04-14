@@ -36,100 +36,155 @@
     </header>
 
     <div class="content-layout" :class="{ 'with-status': authStore.isLoggedIn }">
-      <!-- Articles Section -->
-      <section class="articles-section">
-        <div class="section-header">
-          <h2 class="section-title">{{ articleSectionTitle }}</h2>
-          <div class="section-line"></div>
-        </div>
+      <template v-if="authStore.isLoggedIn">
+        <section class="creator-hub ux-card">
+          <div class="creator-hub-copy">
+            <h2>开始创作</h2>
+            <p>发布新动态或写一篇文章，内容会同步出现在你的个人页「我的发布」。</p>
+          </div>
+          <div class="creator-hub-actions">
+            <router-link to="/moments" class="hub-btn secondary">发动态</router-link>
+            <router-link to="/write" class="hub-btn primary">写文章</router-link>
+          </div>
+        </section>
 
-        <!-- Loading State -->
-        <div v-if="loading" class="loading-state">
-          <div class="home-skeleton-list" aria-hidden="true">
-            <div v-for="n in 3" :key="`home-skeleton-${n}`" class="home-skeleton-card">
-              <div class="skeleton-block home-skeleton-cover"></div>
-              <div class="skeleton-line home-skeleton-title"></div>
-              <div class="skeleton-line home-skeleton-line"></div>
-              <div class="skeleton-line home-skeleton-line short"></div>
+        <section class="dashboard-section">
+          <div class="section-header">
+            <h2 class="section-title">最近发布</h2>
+            <div class="section-line"></div>
+          </div>
+
+          <div v-if="loading" class="loading-state">
+            <div class="home-skeleton-list" aria-hidden="true">
+              <div v-for="n in 3" :key="`home-skeleton-${n}`" class="home-skeleton-card">
+                <div class="skeleton-block home-skeleton-cover"></div>
+                <div class="skeleton-line home-skeleton-title"></div>
+                <div class="skeleton-line home-skeleton-line"></div>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- Error State -->
-        <div v-else-if="error" class="error-state">
-          <p>{{ error }}</p>
-          <button @click="fetchData" class="retry-button">重试</button>
-        </div>
-
-        <!-- Articles Grid -->
-        <div v-else-if="articles.length === 0" class="empty-state">
-          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-            <polyline points="14 2 14 8 20 8"/>
-            <line x1="16" y1="13" x2="8" y2="13"/>
-            <line x1="16" y1="17" x2="8" y2="17"/>
-          </svg>
-          <h3 class="empty-title">还没有文章</h3>
-          <p class="empty-text">从第一篇文章开始沉淀你的思考。</p>
-          <router-link v-if="!authStore.isLoggedIn" to="/login" class="empty-btn">去登录</router-link>
-          <router-link v-else to="/write" class="empty-btn">写文章</router-link>
-        </div>
-
-        <div v-else class="articles-grid">
-          <article
-            v-for="(article, index) in articles"
-            :key="article.id"
-            class="article-card ux-card"
-            :style="{ '--delay': `${index * 0.1}s` }"
-          >
-            <router-link :to="`/article/${article.id}`" class="article-link">
-              <div class="article-body">
-                <div class="article-meta-top">
-                  <span class="article-category">{{ article.category }}</span>
-                  <span class="article-read-time">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <circle cx="12" cy="12" r="10"/>
-                      <polyline points="12 6 12 12 16 14"/>
-                    </svg>
-                    {{ article.readTime }} 分钟
-                  </span>
-                </div>
-
-                <h2 class="article-title">{{ article.title }}</h2>
-                <p class="article-excerpt">{{ article.excerpt }}</p>
-
-                <div class="article-footer">
-                  <span class="article-date">{{ formatDate(article.date) }}</span>
-                </div>
-              </div>
-            </router-link>
-          </article>
-        </div>
-      </section>
-
-      <!-- Statuses Section -->
-      <section class="statuses-section" v-if="authStore.isLoggedIn">
-        <div class="section-header">
-          <h2 class="section-title">我的动态</h2>
-          <div class="section-line"></div>
-        </div>
-
-        <div v-if="statuses.length === 0" class="empty-state small">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-          </svg>
-          <h3 class="empty-title">还没有动态</h3>
-          <p class="empty-text">开始发布第一条动态吧。</p>
-          <router-link to="/moments" class="empty-btn">发动态</router-link>
-        </div>
-
-        <div v-else class="statuses-list">
-          <div v-for="status in statuses" :key="status.id" class="status-card ux-card">
-            <p class="status-content">{{ status.content }}</p>
-            <span class="status-date">{{ formatDate(status.date) }}</span>
+          <div v-else-if="error" class="error-state">
+            <p>{{ error }}</p>
+            <button @click="fetchData" class="retry-button">重试</button>
           </div>
-        </div>
-      </section>
+
+          <div v-else-if="!hasAnyContent" class="empty-state compact">
+            <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M8 3H5a2 2 0 0 0-2 2v3m16 0V5a2 2 0 0 0-2-2h-3M8 21H5a2 2 0 0 1-2-2v-3m16 0v3a2 2 0 0 1-2 2h-3"/>
+              <rect x="7" y="7" width="10" height="10" rx="2"/>
+            </svg>
+            <h3 class="empty-title">还没有发布内容</h3>
+            <p class="empty-text">从第一条动态或第一篇文章开始。</p>
+            <div class="empty-actions">
+              <router-link to="/moments" class="empty-btn ghost">发动态</router-link>
+              <router-link to="/write" class="empty-btn">写文章</router-link>
+            </div>
+          </div>
+
+          <div v-else class="dashboard-grid">
+            <section id="my-articles" class="dashboard-panel ux-card">
+              <div class="panel-head">
+                <h3>文章 {{ articles.length }}</h3>
+                <router-link to="/about">查看全部</router-link>
+              </div>
+              <div v-if="recentArticles.length === 0" class="panel-empty-inline">
+                还没有文章，去 <router-link to="/write">写一篇</router-link>
+              </div>
+              <div v-else class="mini-article-list">
+                <router-link v-for="article in recentArticles" :key="article.id" :to="`/article/${article.id}`" class="mini-article-item">
+                  <strong>{{ article.title }}</strong>
+                  <span>{{ article.category || '未分类' }} · {{ formatDate(article.date) }}</span>
+                </router-link>
+              </div>
+            </section>
+
+            <section id="my-statuses" class="dashboard-panel ux-card">
+              <div class="panel-head">
+                <h3>动态 {{ statuses.length }}</h3>
+                <router-link to="/about">查看全部</router-link>
+              </div>
+              <div v-if="recentStatuses.length === 0" class="panel-empty-inline">
+                还没有动态，去 <router-link to="/moments">发一条</router-link>
+              </div>
+              <div v-else class="mini-status-list">
+                <article v-for="status in recentStatuses" :key="status.id" class="mini-status-item">
+                  <p>{{ status.content }}</p>
+                  <span>{{ formatDate(status.date) }}</span>
+                </article>
+              </div>
+            </section>
+          </div>
+        </section>
+      </template>
+
+      <template v-else>
+        <section id="my-articles" class="articles-section">
+          <div class="section-header">
+            <h2 class="section-title">{{ articleSectionTitle }}</h2>
+            <div class="section-line"></div>
+          </div>
+
+          <div v-if="loading" class="loading-state">
+            <div class="home-skeleton-list" aria-hidden="true">
+              <div v-for="n in 3" :key="`home-skeleton-${n}`" class="home-skeleton-card">
+                <div class="skeleton-block home-skeleton-cover"></div>
+                <div class="skeleton-line home-skeleton-title"></div>
+                <div class="skeleton-line home-skeleton-line"></div>
+                <div class="skeleton-line home-skeleton-line short"></div>
+              </div>
+            </div>
+          </div>
+
+          <div v-else-if="error" class="error-state">
+            <p>{{ error }}</p>
+            <button @click="fetchData" class="retry-button">重试</button>
+          </div>
+
+          <div v-else-if="articles.length === 0" class="empty-state">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+            <h3 class="empty-title">还没有文章</h3>
+            <p class="empty-text">从第一篇文章开始沉淀你的思考。</p>
+            <router-link to="/login" class="empty-btn">去登录</router-link>
+          </div>
+
+          <div v-else class="articles-grid">
+            <article
+              v-for="(article, index) in articles"
+              :key="article.id"
+              class="article-card ux-card"
+              :style="{ '--delay': `${index * 0.1}s` }"
+            >
+              <router-link :to="`/article/${article.id}`" class="article-link">
+                <div class="article-body">
+                  <div class="article-meta-top">
+                    <span class="article-category">{{ article.category }}</span>
+                    <span class="article-read-time">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 12 16 14"/>
+                      </svg>
+                      {{ article.readTime }} 分钟
+                    </span>
+                  </div>
+
+                  <h2 class="article-title">{{ article.title }}</h2>
+                  <p class="article-excerpt">{{ article.excerpt }}</p>
+
+                  <div class="article-footer">
+                    <span class="article-date">{{ formatDate(article.date) }}</span>
+                  </div>
+                </div>
+              </router-link>
+            </article>
+          </div>
+        </section>
+      </template>
     </div>
 
     <!-- Back to Top -->
@@ -188,6 +243,9 @@ const heroSubtitle = computed(() => {
 })
 
 const articleSectionTitle = computed(() => (authStore.isLoggedIn ? '我的文章' : '最新文章'))
+const hasAnyContent = computed(() => articles.value.length > 0 || statuses.value.length > 0)
+const recentArticles = computed(() => articles.value.slice(0, 5))
+const recentStatuses = computed(() => statuses.value.slice(0, 5))
 
 const totalReadTime = computed(() => {
   return articles.value.reduce((sum, article) => sum + (article.readTime || 0), 0)
@@ -322,7 +380,7 @@ onUnmounted(() => {
 .pull-refresh-indicator {
   position: fixed;
   left: 50%;
-  top: calc(50px + var(--safe-top));
+  top: var(--app-pull-indicator-top);
   z-index: 1200;
   transform: translate(-50%, calc(-56px + var(--pull-offset, 0px)));
   opacity: 0;
@@ -392,10 +450,7 @@ onUnmounted(() => {
 }
 
 .content-layout.with-status {
-  display: grid;
-  grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr);
-  gap: 26px;
-  align-items: start;
+  display: block;
 }
 
 .hero-content {
@@ -526,6 +581,153 @@ onUnmounted(() => {
   flex: 1;
   height: 1px;
   background: var(--color-border-light);
+}
+
+.creator-hub {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px;
+  border-radius: var(--panel-radius);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 16%, var(--color-border-light));
+  background:
+    radial-gradient(circle at 16% 18%, color-mix(in srgb, var(--color-accent) 12%, transparent), transparent 55%),
+    var(--surface-panel);
+}
+
+.creator-hub-copy h2 {
+  margin: 0 0 4px;
+  font-size: 20px;
+  line-height: 1.25;
+}
+
+.creator-hub-copy p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.creator-hub-actions {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.hub-btn {
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hub-btn.primary {
+  background: var(--color-accent);
+  color: #fff;
+}
+
+.hub-btn.secondary {
+  color: var(--color-text-primary);
+  border: 1px solid color-mix(in srgb, var(--color-border-light) 90%, transparent);
+  background: var(--color-surface-elevated);
+}
+
+.dashboard-section {
+  margin-top: 12px;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+}
+
+.dashboard-panel {
+  border-radius: var(--panel-radius);
+  border: 1px solid color-mix(in srgb, var(--color-border-light) 88%, transparent);
+  background: var(--surface-panel);
+  padding: var(--panel-padding);
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.panel-head h3 {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.panel-head a {
+  font-size: 12px;
+  color: var(--color-accent);
+}
+
+.panel-empty-inline {
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+  color: var(--color-text-tertiary);
+  font-size: 13px;
+}
+
+.mini-article-list,
+.mini-status-list {
+  display: grid;
+  gap: 8px;
+}
+
+.mini-article-item,
+.mini-status-item {
+  border: 1px solid color-mix(in srgb, var(--color-border-light) 88%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-surface-elevated) 94%, transparent);
+  padding: 9px 10px;
+  transition: border-color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.mini-article-item:hover,
+.mini-status-item:hover {
+  border-color: color-mix(in srgb, var(--color-accent) 18%, var(--color-border-light));
+  background: var(--surface-panel-hover);
+}
+
+.mini-article-item {
+  display: grid;
+  gap: 4px;
+}
+
+.mini-article-item strong {
+  color: var(--color-text-primary);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.mini-article-item span,
+.mini-status-item span {
+  color: var(--color-text-tertiary);
+  font-size: 12px;
+}
+
+.mini-status-item p {
+  margin: 0 0 6px;
+  color: var(--color-text-primary);
+  font-size: 14px;
+  line-height: 1.58;
+  white-space: pre-wrap;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 /* Article Cards */
@@ -689,7 +891,7 @@ onUnmounted(() => {
 /* Back to Top */
 .back-to-top {
   position: fixed;
-  bottom: calc(28px + var(--safe-bottom));
+  bottom: var(--app-floating-bottom-desktop);
   right: 32px;
   width: 48px;
   height: 48px;
@@ -756,6 +958,26 @@ onUnmounted(() => {
 .empty-btn:hover {
   background: var(--color-accent-hover);
   transform: translateY(-1px);
+}
+
+.empty-state.compact {
+  padding: 48px 0 36px;
+}
+
+.empty-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.empty-btn.ghost {
+  background: var(--color-surface-elevated);
+  color: var(--color-text-primary);
+  border: 1px solid color-mix(in srgb, var(--color-border-light) 90%, transparent);
+  box-shadow: none;
+}
+
+.empty-btn.ghost:hover {
+  background: var(--surface-panel-hover);
 }
 
 /* Loading State */
@@ -859,7 +1081,7 @@ onUnmounted(() => {
 
 .content-layout.with-status .statuses-section {
   position: sticky;
-  top: calc(66px + var(--safe-top));
+  top: calc(var(--app-nav-height) + 18px + var(--safe-top));
 }
 
 .statuses-list {
@@ -930,12 +1152,29 @@ onUnmounted(() => {
   .content-layout,
   .content-layout.with-status {
     display: block;
-    padding: 0 var(--layout-gutter-mobile) 68px;
+    padding: 0 var(--layout-gutter-mobile) var(--app-page-bottom-padding-mobile);
+  }
+
+  .creator-hub {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .creator-hub-actions {
+    width: 100%;
+  }
+
+  .hub-btn {
+    flex: 1;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
   }
 
   .hero {
     position: sticky;
-    top: calc(44px + var(--safe-top));
+    top: var(--app-sticky-top);
     z-index: 11;
     padding: 56px var(--layout-gutter-mobile) 40px;
     background: color-mix(in srgb, var(--color-bg) 94%, transparent);
@@ -975,20 +1214,15 @@ onUnmounted(() => {
   }
 
   .back-to-top {
-    bottom: calc(16px + var(--safe-bottom));
+    bottom: var(--app-floating-bottom-mobile);
     right: 20px;
     width: 44px;
     height: 44px;
   }
 
-  .statuses-section {
-    margin-top: 16px;
-    padding: 0 0 calc(84px + var(--safe-bottom));
-    position: static;
-  }
-
-  .statuses-list {
-    gap: 10px;
+  .empty-actions {
+    width: 100%;
+    flex-direction: column;
   }
 }
 

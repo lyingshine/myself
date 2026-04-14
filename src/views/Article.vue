@@ -245,6 +245,7 @@ import { useRoute } from 'vue-router'
 import ReadingProgress from '../components/ReadingProgress.vue'
 import apiService from '../api'
 import { useAuthStore } from '../stores/auth'
+import { formatDateZh } from '../utils/presentation'
 
 const route = useRoute()
 const authStore = useAuthStore()
@@ -277,16 +278,7 @@ const toggleFocusMode = () => {
   localStorage.setItem(focusStorageKey, isFocusMode.value ? '1' : '0')
 }
 
-const formatDate = (dateStr) => {
-  if (!dateStr) return '--'
-  const date = new Date(dateStr)
-  if (Number.isNaN(date.getTime())) return '--'
-  return date.toLocaleDateString('zh-CN', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  })
-}
+const formatDate = (dateStr) => formatDateZh(dateStr)
 
 const fetchArticle = async (id) => {
   loading.value = true
@@ -1385,7 +1377,7 @@ watch(() => route.params.id, (newId) => {
 /* Responsive */
 @media (max-width: 768px) {
   .article-layout {
-    padding: 0 16px calc(72px + var(--safe-bottom));
+    padding: 0 16px var(--app-page-bottom-padding-mobile);
   }
 
   .article-container {

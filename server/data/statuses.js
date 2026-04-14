@@ -60,16 +60,8 @@ const deleteStatus = async (id, authorId) => {
   return true
 }
 
-const likeStatus = async (id) => {
-  await pool.write('UPDATE statuses SET likes = likes + 1 WHERE id = ?', [id])
-  const [rows] = await pool.read('SELECT id, likes, author_id FROM statuses WHERE id = ? LIMIT 1', [id])
-  bumpStatusListVersion()
-  return rows[0]
-}
-
 module.exports = {
   getStatuses,
   createStatus,
-  deleteStatus,
-  likeStatus
+  deleteStatus
 }

@@ -6,80 +6,74 @@
 
     <Transition name="sheet-up">
       <div v-if="isComposeOpen" class="compose-sheet">
-        <button class="compose-item" type="button" @click="goCreate('moments')">
+        <button
+          v-for="action in mobileComposeActions"
+          :key="action.key"
+          class="compose-item"
+          type="button"
+          @click="goCreate(action)"
+        >
           <span class="compose-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-            </svg>
+            <NavIcon :name="action.icon" :size="18" />
           </span>
-          发动态
-        </button>
-        <button class="compose-item" type="button" @click="goCreate('article')">
-          <span class="compose-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 20h9"/>
-              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
-            </svg>
-          </span>
-          写文章
+          {{ action.label }}
         </button>
       </div>
     </Transition>
 
     <nav class="mobile-tabbar">
-      <button class="tab-item" :class="{ active: isActive('/') }" type="button" @click="goTo('/')">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-          <polyline points="9 22 9 12 15 12 15 22"/>
-        </svg>
-        <span>首页</span>
-      </button>
-
-      <button class="tab-item" :class="{ active: isActive('/discovery') }" type="button" @click="goTo('/discovery')">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"/>
-          <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
-        </svg>
-        <span>发现</span>
+      <button
+        v-for="tab in leftTabs"
+        :key="tab.key"
+        class="tab-item"
+        :class="{ active: isTabActive(tab) }"
+        type="button"
+        @click="onTabClick(tab)"
+      >
+        <NavIcon :name="tab.icon" :size="18" />
+        <span>{{ tab.label }}</span>
+        <span v-if="tab.badge === 'unread' && notificationsStore.unreadCount > 0" class="tab-badge">
+          {{ notificationsStore.unreadCount > 99 ? '99+' : notificationsStore.unreadCount }}
+        </span>
       </button>
 
       <button class="tab-item tab-compose" :class="{ active: isComposeOpen }" type="button" @click="toggleCompose">
         <span class="plus-icon" aria-hidden="true"></span>
       </button>
 
-      <button class="tab-item" :class="{ active: isActive('/messages') }" type="button" @click="goTo('/messages')">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-        </svg>
-        <span>消息</span>
-        <span v-if="notificationsStore.unreadCount > 0" class="tab-badge">
+      <button
+        v-for="tab in rightTabs"
+        :key="tab.key"
+        class="tab-item"
+        :class="{ active: isTabActive(tab) }"
+        type="button"
+        @click="onTabClick(tab)"
+      >
+        <NavIcon :name="tab.icon" :size="18" />
+        <span>{{ tab.label }}</span>
+        <span v-if="tab.badge === 'unread' && notificationsStore.unreadCount > 0" class="tab-badge">
           {{ notificationsStore.unreadCount > 99 ? '99+' : notificationsStore.unreadCount }}
         </span>
-      </button>
-
-      <button class="tab-item" :class="{ active: isActive('/about') || isActive('/login') }" type="button" @click="goMine">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"/>
-          <circle cx="12" cy="10" r="3"/>
-          <path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"/>
-        </svg>
-        <span>我的</span>
       </button>
     </nav>
   </div>
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { computed, ref, watch, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { useNotificationsStore } from '../stores/notifications'
+import NavIcon from './NavIcon.vue'
+import { isPathActive, mobileTabLinks, mobileComposeActions } from '../config/navigation'
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const notificationsStore = useNotificationsStore()
 const isComposeOpen = ref(false)
+const leftTabs = computed(() => mobileTabLinks.slice(0, 2))
+const rightTabs = computed(() => mobileTabLinks.slice(2))
 
 const closeCompose = () => {
   isComposeOpen.value = false
@@ -89,9 +83,17 @@ const toggleCompose = () => {
   isComposeOpen.value = !isComposeOpen.value
 }
 
-const isActive = (path) => {
-  if (path === '/') return route.path === '/'
-  return route.path === path || route.path.startsWith(`${path}/`)
+const resolveTabPath = (tab) => {
+  if (tab.key === 'mine') {
+    return authStore.isLoggedIn ? '/about' : '/login'
+  }
+  return tab.path
+}
+
+const isTabActive = (tab) => {
+  if (tab.key === 'compose') return isComposeOpen.value
+  const target = resolveTabPath(tab)
+  return isPathActive(route.path, target)
 }
 
 const goTo = (path) => {
@@ -99,18 +101,21 @@ const goTo = (path) => {
   if (route.path !== path) router.push(path)
 }
 
-const goMine = () => {
-  goTo(authStore.isLoggedIn ? '/about' : '/login')
+const onTabClick = (tab) => {
+  if (tab.key === 'compose') {
+    toggleCompose()
+    return
+  }
+  goTo(resolveTabPath(tab))
 }
 
-const goCreate = (type) => {
+const goCreate = (action) => {
   closeCompose()
-  if (!authStore.isLoggedIn) {
+  if (action.requiresAuth && !authStore.isLoggedIn) {
     router.push('/login')
     return
   }
-  if (type === 'moments') router.push('/moments')
-  if (type === 'article') router.push('/write')
+  router.push(action.path)
 }
 
 watch(
@@ -120,6 +125,10 @@ watch(
 
 watch(isComposeOpen, (open) => {
   document.body.style.overflow = open ? 'hidden' : ''
+})
+
+onUnmounted(() => {
+  document.body.style.overflow = ''
 })
 </script>
 
@@ -131,8 +140,6 @@ watch(isComposeOpen, (open) => {
 @media (max-width: 768px) {
   .mobile-tabbar-wrap {
     display: block;
-    --tabbar-core-height: clamp(60px, 7.6dvh, 70px);
-    --tabbar-safe-bottom: max(8px, calc(var(--safe-bottom) * 0.45));
   }
 
   .mobile-tabbar {
@@ -140,8 +147,8 @@ watch(isComposeOpen, (open) => {
     left: 0;
     right: 0;
     bottom: 0;
-    height: calc(var(--tabbar-core-height) + var(--tabbar-safe-bottom));
-    padding: 1px max(8px, var(--safe-right)) calc(1px + var(--tabbar-safe-bottom)) max(8px, var(--safe-left));
+    height: var(--app-tabbar-total-height);
+    padding: 1px max(8px, var(--safe-right)) calc(1px + var(--app-tabbar-safe-bottom)) max(8px, var(--safe-left));
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
     align-items: center;
@@ -155,7 +162,7 @@ watch(isComposeOpen, (open) => {
   }
 
   .tab-item {
-    height: calc(var(--tabbar-core-height) - 8px);
+    height: calc(var(--app-tabbar-core-height) - 8px);
     border: none;
     border-radius: clamp(10px, 3vw, 14px);
     background: transparent;
@@ -190,7 +197,7 @@ watch(isComposeOpen, (open) => {
     text-align: center;
   }
 
-  .tab-item svg {
+  .tab-item :deep(svg) {
     width: 17px;
     height: 17px;
   }
@@ -211,8 +218,8 @@ watch(isComposeOpen, (open) => {
     color: var(--color-accent);
     transform: none;
     border-radius: 12px;
-    height: calc(var(--tabbar-core-height) - 18px);
-    width: calc(var(--tabbar-core-height) - 18px);
+    height: calc(var(--app-tabbar-core-height) - 18px);
+    width: calc(var(--app-tabbar-core-height) - 18px);
     margin: 0 auto;
     align-self: center;
     border: none;
@@ -266,7 +273,7 @@ watch(isComposeOpen, (open) => {
     position: fixed;
     left: max(12px, var(--safe-left));
     right: max(12px, var(--safe-right));
-    bottom: calc(var(--tabbar-core-height) + 14px + var(--tabbar-safe-bottom));
+    bottom: calc(var(--app-tabbar-core-height) + 14px + var(--app-tabbar-safe-bottom));
     display: grid;
     gap: 10px;
     padding: 12px;

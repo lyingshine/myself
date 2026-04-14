@@ -60,7 +60,7 @@ const appVersion = __APP_VERSION__
 .footer-container {
   max-width: 980px;
   margin: 0 auto;
-  padding: 18px 22px calc(14px + var(--safe-bottom));
+  padding: 18px var(--layout-gutter) var(--app-footer-bottom-desktop);
 }
 
 .footer-top {
@@ -78,7 +78,7 @@ const appVersion = __APP_VERSION__
 .footer-logo {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--app-gap-xs);
   font-size: 16px;
   font-weight: 600;
   color: var(--color-text-primary);
@@ -121,7 +121,7 @@ const appVersion = __APP_VERSION__
   display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: var(--app-gap-sm);
 }
 
 .footer-section a {
@@ -151,12 +151,12 @@ const appVersion = __APP_VERSION__
 
 @media (max-width: 768px) {
   .footer-container {
-    padding: 14px 16px calc(10px + var(--safe-bottom));
+    padding: 14px var(--layout-gutter-mobile) var(--app-footer-bottom-mobile);
   }
 
   .footer-top {
     flex-direction: column;
-    gap: 14px;
+    gap: var(--app-gap-lg);
   }
 
   .footer-links {

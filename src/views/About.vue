@@ -116,6 +116,62 @@
         </div>
       </template>
     </section>
+
+    <section v-if="authStore.isLoggedIn" class="my-content-card ux-card">
+      <header class="my-content-header">
+        <h2>我的发布</h2>
+        <div class="my-content-tabs">
+          <button
+            type="button"
+            class="my-tab chip-button"
+            :class="{ active: myContentTab === 'articles' }"
+            @click="myContentTab = 'articles'"
+          >
+            文章 {{ myArticles.length }}
+          </button>
+          <button
+            type="button"
+            class="my-tab chip-button"
+            :class="{ active: myContentTab === 'statuses' }"
+            @click="myContentTab = 'statuses'"
+          >
+            动态 {{ myStatuses.length }}
+          </button>
+        </div>
+      </header>
+
+      <div v-if="myContentLoading" class="my-content-loading">加载中...</div>
+      <div v-else-if="myContentError" class="my-content-error">
+        <span>{{ myContentError }}</span>
+        <button type="button" class="chip-button" @click="fetchMyContent">重试</button>
+      </div>
+
+      <template v-else-if="myContentTab === 'articles'">
+        <div v-if="!myArticles.length" class="my-content-empty">
+          <p>你还没有发布文章</p>
+          <router-link to="/write" class="chip-button">去写文章</router-link>
+        </div>
+        <div v-else class="my-article-list">
+          <router-link v-for="article in myArticles" :key="article.id" :to="`/article/${article.id}`" class="my-article-item">
+            <strong>{{ article.title }}</strong>
+            <span>{{ article.category || '未分类' }} · {{ formatDate(article.date) }}</span>
+          </router-link>
+        </div>
+      </template>
+
+      <template v-else>
+        <div v-if="!myStatuses.length" class="my-content-empty">
+          <p>你还没有发布动态</p>
+          <router-link to="/moments" class="chip-button">去发动态</router-link>
+        </div>
+        <div v-else class="my-status-list">
+          <article v-for="status in myStatuses" :key="status.id" class="my-status-item">
+            <p>{{ status.content }}</p>
+            <span>{{ formatDate(status.date) }}</span>
+          </article>
+        </div>
+      </template>
+    </section>
   </div>
 </template>
 
@@ -131,6 +187,11 @@ const saveSuccess = ref(false)
 const uploadingAvatar = ref(false)
 const avatarError = ref('')
 const avatarInputRef = ref(null)
+const myContentTab = ref('articles')
+const myArticles = ref([])
+const myStatuses = ref([])
+const myContentLoading = ref(false)
+const myContentError = ref('')
 
 const form = reactive({
   headline: '',
@@ -196,10 +257,68 @@ const fillForm = (user = {}) => {
   form.website = user.website || ''
 }
 
+const normalizeArticle = (article = {}) => ({
+  ...article,
+  authorId: article.authorId ?? article.author_id,
+  date: article.date ?? article.created_at
+})
+
+const normalizeStatus = (status = {}) => ({
+  ...status,
+  authorId: status.authorId ?? status.author_id,
+  date: status.date ?? status.created_at
+})
+
+const formatDate = (value) => {
+  if (!value) return '未知时间'
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) return '未知时间'
+  return parsed.toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  })
+}
+
+const fetchMyContent = async () => {
+  if (!authStore.isLoggedIn) {
+    myArticles.value = []
+    myStatuses.value = []
+    myContentError.value = ''
+    return
+  }
+
+  const userId = Number(authStore.user?.id || 0)
+  if (!userId) return
+
+  myContentLoading.value = true
+  myContentError.value = ''
+  try {
+    const [articlesRes, statusesRes] = await Promise.all([
+      apiService.getArticles({ authorId: userId, limit: 100 }),
+      apiService.getStatuses({ authorId: userId, limit: 100 })
+    ])
+    myArticles.value = (articlesRes.data?.articles || []).map(normalizeArticle)
+    myStatuses.value = (statusesRes.data || []).map(normalizeStatus)
+  } catch (error) {
+    myContentError.value = error.message || '加载我的发布失败'
+  } finally {
+    myContentLoading.value = false
+  }
+}
+
 watch(
   () => authStore.user,
   (user) => {
     fillForm(user || {})
+  },
+  { immediate: true }
+)
+
+watch(
+  () => [authStore.isLoggedIn, authStore.user?.id],
+  () => {
+    fetchMyContent()
   },
   { immediate: true }
 )
@@ -285,7 +404,7 @@ const handleAvatarSelect = async (event) => {
 .about-page {
   max-width: var(--layout-max-width);
   margin: 0 auto;
-  padding: 22px var(--layout-gutter) calc(76px + var(--safe-bottom));
+  padding: 22px var(--layout-gutter) var(--app-page-bottom-lg);
 }
 
 .about-header {
@@ -555,9 +674,107 @@ textarea {
   color: #fff;
 }
 
+.my-content-card {
+  margin-top: 12px;
+  border-radius: var(--panel-radius);
+  box-shadow: none;
+  padding: var(--panel-padding);
+}
+
+.my-content-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.my-content-header h2 {
+  font-size: 16px;
+  margin: 0;
+}
+
+.my-content-tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.my-tab.active {
+  background: color-mix(in srgb, var(--color-accent) 12%, var(--color-surface));
+  border-color: color-mix(in srgb, var(--color-accent) 24%, var(--color-border-light));
+  color: var(--color-text-primary);
+}
+
+.my-content-loading,
+.my-content-error,
+.my-content-empty {
+  min-height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--color-text-secondary);
+}
+
+.my-content-error {
+  color: #d04848;
+}
+
+.my-content-empty {
+  flex-direction: column;
+}
+
+.my-content-empty p {
+  margin: 0;
+}
+
+.my-article-list,
+.my-status-list {
+  display: grid;
+  gap: 8px;
+}
+
+.my-article-item,
+.my-status-item {
+  display: grid;
+  gap: 6px;
+  border: 1px solid color-mix(in srgb, var(--color-border-light) 88%, transparent);
+  border-radius: 12px;
+  background: var(--surface-panel);
+  padding: 10px 12px;
+  transition: border-color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.my-article-item:hover,
+.my-status-item:hover {
+  border-color: color-mix(in srgb, var(--color-accent) 18%, var(--color-border-light));
+  background: var(--surface-panel-hover);
+}
+
+.my-article-item strong {
+  color: var(--color-text-primary);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.my-article-item span,
+.my-status-item span {
+  color: var(--color-text-tertiary);
+  font-size: 12px;
+}
+
+.my-status-item p {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 @media (max-width: 768px) {
   .about-page {
-    padding: 16px var(--layout-gutter-mobile) calc(64px + var(--safe-bottom));
+    padding: 16px var(--layout-gutter-mobile) var(--app-page-bottom-padding-mobile);
   }
 
   .about-header {
@@ -606,6 +823,11 @@ textarea {
 
   .save-btn {
     width: 100%;
+  }
+
+  .my-content-header {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 </style>

@@ -37,6 +37,35 @@
   --safe-right: env(safe-area-inset-right, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
+  --app-nav-height: 48px;
+  --app-tabbar-core-height: clamp(60px, 7.6dvh, 70px);
+  --app-tabbar-safe-bottom: max(8px, calc(var(--safe-bottom) * 0.45));
+  --app-tabbar-total-height: calc(var(--app-tabbar-core-height) + var(--app-tabbar-safe-bottom));
+  --app-sticky-top: calc(var(--app-nav-height) + var(--safe-top));
+  --app-page-bottom-padding-mobile: calc(var(--app-tabbar-total-height) + 8px);
+  --app-pull-indicator-top: calc(var(--app-sticky-top) + 2px);
+  --app-page-bottom-sm: calc(32px + var(--safe-bottom));
+  --app-page-bottom-md: calc(40px + var(--safe-bottom));
+  --app-page-bottom-lg: calc(76px + var(--safe-bottom));
+  --app-page-bottom-lg-plus: calc(80px + var(--safe-bottom));
+  --app-page-bottom-xl: calc(84px + var(--safe-bottom));
+  --app-page-bottom-2xl: calc(88px + var(--safe-bottom));
+  --app-overlay-bottom-gap: calc(10px + var(--safe-bottom));
+  --app-footer-bottom-desktop: calc(14px + var(--safe-bottom));
+  --app-footer-bottom-mobile: calc(10px + var(--safe-bottom));
+  --app-floating-bottom-desktop: calc(28px + var(--safe-bottom));
+  --app-floating-bottom-mobile: calc(16px + var(--safe-bottom));
+  --app-control-height-2xs: 28px;
+  --app-control-height-xs: 30px;
+  --app-control-height-sm: 34px;
+  --app-control-height-sm-plus: 36px;
+  --app-control-height-md: 40px;
+  --app-control-height-lg: 44px;
+  --app-control-height-xl: 48px;
+  --app-gap-xs: 8px;
+  --app-gap-sm: 10px;
+  --app-gap-md: 12px;
+  --app-gap-lg: 14px;
   --touch-target-min: 44px;
   --ux-ring: 0 0 0 3px color-mix(in srgb, var(--color-accent) 24%, transparent);
   --ux-ease: cubic-bezier(0.22, 1, 0.36, 1);
@@ -50,6 +79,10 @@
   --surface-panel: color-mix(in srgb, var(--color-surface) 97%, transparent);
   --surface-panel-hover: color-mix(in srgb, var(--color-accent-subtle) 10%, var(--color-surface));
   --surface-embedded: color-mix(in srgb, var(--color-surface) 98%, transparent);
+  --color-nav-item-hover-bg: color-mix(in srgb, var(--color-surface-elevated) 94%, transparent);
+  --color-nav-item-active-bg: color-mix(in srgb, var(--color-accent) 14%, var(--color-surface-elevated));
+  --color-nav-item-active-border: color-mix(in srgb, var(--color-accent) 30%, var(--color-border-light));
+  --color-nav-item-active-icon: color-mix(in srgb, var(--color-accent) 84%, var(--color-text-primary));
   --app-backdrop:
     radial-gradient(circle at 10% -12%, rgba(126, 155, 194, 0.14), transparent 44%),
     radial-gradient(circle at 92% -8%, rgba(152, 168, 195, 0.11), transparent 40%);
@@ -119,6 +152,8 @@
   --app-backdrop:
     radial-gradient(circle at 12% -14%, rgba(117, 148, 189, 0.14), transparent 44%),
     radial-gradient(circle at 88% -10%, rgba(148, 161, 190, 0.1), transparent 40%);
+  --color-nav-item-active-bg: color-mix(in srgb, var(--color-accent) 12%, var(--color-surface-elevated));
+  --color-nav-item-active-border: color-mix(in srgb, var(--color-accent) 26%, var(--color-border-light));
   --shadow-sm: var(--elevation-none);
   --shadow-md: var(--elevation-soft);
   --shadow-lg: var(--elevation-soft);
@@ -148,6 +183,9 @@
   --app-backdrop:
     radial-gradient(circle at 18% -8%, rgba(78, 121, 167, 0.21), transparent 46%),
     radial-gradient(circle at 88% 2%, rgba(50, 91, 135, 0.17), transparent 42%);
+  --color-nav-item-active-bg: color-mix(in srgb, var(--color-accent) 18%, var(--color-surface-elevated));
+  --color-nav-item-active-border: color-mix(in srgb, var(--color-accent) 38%, var(--color-border-light));
+  --color-nav-item-active-icon: color-mix(in srgb, var(--color-accent) 90%, #ffffff);
   --shadow-sm: var(--elevation-none);
   --shadow-md: var(--elevation-soft);
   --shadow-lg: var(--elevation-soft);
@@ -181,6 +219,9 @@
   --app-backdrop:
     radial-gradient(circle at 14% -10%, rgba(90, 141, 191, 0.2), transparent 46%),
     radial-gradient(circle at 86% 0%, rgba(59, 106, 152, 0.15), transparent 42%);
+  --color-nav-item-active-bg: color-mix(in srgb, var(--color-accent) 18%, var(--color-surface-elevated));
+  --color-nav-item-active-border: color-mix(in srgb, var(--color-accent) 38%, var(--color-border-light));
+  --color-nav-item-active-icon: color-mix(in srgb, var(--color-accent) 90%, #ffffff);
   --shadow-sm: var(--elevation-none);
   --shadow-md: var(--elevation-soft);
   --shadow-lg: var(--elevation-soft);
@@ -214,6 +255,8 @@
   --app-backdrop:
     radial-gradient(circle at 10% -14%, rgba(194, 149, 105, 0.16), transparent 46%),
     radial-gradient(circle at 90% -9%, rgba(181, 140, 101, 0.13), transparent 42%);
+  --color-nav-item-active-bg: color-mix(in srgb, var(--color-accent) 13%, var(--color-surface-elevated));
+  --color-nav-item-active-border: color-mix(in srgb, var(--color-accent) 28%, var(--color-border-light));
   --shadow-sm: var(--elevation-none);
   --shadow-md: var(--elevation-soft);
   --shadow-lg: var(--elevation-soft);
@@ -243,6 +286,8 @@
   --app-backdrop:
     radial-gradient(circle at 12% -14%, rgba(126, 150, 187, 0.15), transparent 46%),
     radial-gradient(circle at 88% -10%, rgba(105, 136, 176, 0.11), transparent 42%);
+  --color-nav-item-active-bg: color-mix(in srgb, var(--color-accent) 13%, var(--color-surface-elevated));
+  --color-nav-item-active-border: color-mix(in srgb, var(--color-accent) 28%, var(--color-border-light));
   --shadow-sm: var(--elevation-none);
   --shadow-md: var(--elevation-soft);
   --shadow-lg: var(--elevation-soft);
@@ -483,6 +528,10 @@ button {
 @media (max-width: 768px) {
   html {
     font-size: 15px;
+  }
+
+  :root {
+    --app-nav-height: 44px;
   }
 
   .page-shell {

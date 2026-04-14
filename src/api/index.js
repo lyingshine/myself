@@ -188,10 +188,6 @@ class ApiService {
     })
   }
 
-  async likeStatus(id) {
-    return this.reactToContent('status', id, 'like')
-  }
-
   async getEngagement(targetType, ids = []) {
     const safeIds = [...new Set((ids || []).map((id) => Number(id)).filter((id) => Number.isFinite(id) && id > 0))]
     const query = new URLSearchParams({

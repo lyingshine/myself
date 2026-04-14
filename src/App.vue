@@ -62,12 +62,11 @@ watch(
   background: var(--color-bg);
   display: flex;
   flex-direction: column;
-  --nav-height: 48px;
 }
 
 main {
   flex: 1;
-  padding-top: var(--nav-height);
+  padding-top: var(--app-nav-height);
 }
 
 .route-fade-enter-active,
@@ -128,7 +127,7 @@ main {
 
 @media (max-width: 768px) {
   main {
-    padding-bottom: calc(clamp(60px, 7.6dvh, 70px) + max(8px, calc(var(--safe-bottom) * 0.45)));
+    padding-bottom: var(--app-tabbar-total-height);
   }
 }
 </style>

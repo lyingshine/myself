@@ -235,6 +235,7 @@ import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import apiService, { resolveAssetUrl } from '../api'
 import { usePullToRefresh } from '../composables/usePullToRefresh'
+import { isImageAvatar, getAvatarText, formatDateZh, formatRelativeZh } from '../utils/presentation'
 
 const authStore = useAuthStore()
 
@@ -303,36 +304,8 @@ const totalArticlePages = computed(() => Math.ceil(articles.value.length / perPa
 const totalStatusPages = computed(() => Math.ceil(statuses.value.length / perPage))
 const totalMixedPages = computed(() => Math.ceil(mixedFeed.value.length / perPage))
 
-const isImageAvatar = (avatar) =>
-  typeof avatar === 'string' && /^(https?:\/\/|\/uploads\/|data:image\/)/i.test(avatar)
-
-const getAvatarText = (avatar, username) => {
-  if (isImageAvatar(avatar)) return (username || 'U').charAt(0).toUpperCase()
-  const trimmed = typeof avatar === 'string' ? avatar.trim() : ''
-  if (trimmed) return trimmed.charAt(0).toUpperCase()
-  return (username || 'U').charAt(0).toUpperCase()
-}
-
-const formatDate = (dateStr) => {
-  const d = new Date(dateStr)
-  if (Number.isNaN(d.getTime())) return '--'
-  return d.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })
-}
-
-const formatRelative = (dateStr) => {
-  const d = new Date(dateStr)
-  if (Number.isNaN(d.getTime())) return '--'
-  const now = Date.now()
-  const diff = now - d.getTime()
-  const m = 60 * 1000
-  const h = 60 * m
-  const day = 24 * h
-  if (diff < m) return '刚刚'
-  if (diff < h) return `${Math.floor(diff / m)} 分钟前`
-  if (diff < day) return `${Math.floor(diff / h)} 小时前`
-  if (diff < 7 * day) return `${Math.floor(diff / day)} 天前`
-  return formatDate(dateStr)
-}
+const formatDate = (dateStr) => formatDateZh(dateStr)
+const formatRelative = (dateStr) => formatRelativeZh(dateStr)
 
 const getStats = (type, id) => {
   const row = engagementMap.value[type]?.[id] || {}
@@ -597,13 +570,13 @@ onUnmounted(() => {
 .discovery-page {
   max-width: var(--layout-max-width);
   margin: 0 auto;
-  padding: 0 var(--layout-gutter) calc(80px + var(--safe-bottom));
+  padding: 0 var(--layout-gutter) var(--app-page-bottom-lg-plus);
 }
 
 .pull-refresh-indicator {
   position: fixed;
   left: 50%;
-  top: calc(50px + var(--safe-top));
+  top: var(--app-pull-indicator-top);
   z-index: 1200;
   transform: translate(-50%, calc(-56px + var(--pull-offset, 0px)));
   opacity: 0;
@@ -1112,12 +1085,12 @@ onUnmounted(() => {
 
 @media (max-width: 768px) {
   .discovery-page {
-    padding: 0 var(--layout-gutter-mobile) calc(76px + var(--safe-bottom));
+    padding: 0 var(--layout-gutter-mobile) var(--app-page-bottom-padding-mobile);
   }
 
   .discovery-header {
     position: sticky;
-    top: calc(44px + var(--safe-top));
+    top: var(--app-sticky-top);
     z-index: 11;
     background: color-mix(in srgb, var(--color-bg) 94%, transparent);
     backdrop-filter: blur(10px);

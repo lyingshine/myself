@@ -80,6 +80,9 @@ const router = createRouter({
     if (savedPosition) {
       return savedPosition
     }
+    if (to.hash) {
+      return { el: to.hash, top: 76, behavior: 'smooth' }
+    }
     return { top: 0, left: 0 }
   }
 })
@@ -92,7 +95,7 @@ router.beforeEach((to, from, next) => {
 
   if (to.meta.requiresAuth && !hasSession) {
     next('/login')
-  } else if (to.meta.requiresAdmin && user?.role !== 'admin' && !(refreshToken && !user)) {
+  } else if (to.meta.requiresAdmin && user?.role !== 'admin') {
     next('/')
   } else if (to.meta.guestOnly && hasSession) {
     next('/')

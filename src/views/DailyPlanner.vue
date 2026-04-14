@@ -1017,7 +1017,7 @@ watch(() => authStore.isLoggedIn, async (isLoggedIn, wasLoggedIn) => {
 .planner-page {
   max-width: 920px;
   margin: 0 auto;
-  padding: 28px 22px calc(84px + var(--safe-bottom));
+  padding: 28px 22px calc(var(--app-tabbar-total-height) + 12px);
 }
 
 .planner-header {
@@ -1055,7 +1055,7 @@ watch(() => authStore.isLoggedIn, async (isLoggedIn, wasLoggedIn) => {
 
 .planner-utility {
   position: fixed;
-  top: calc(56px + var(--safe-top));
+  top: calc(var(--app-sticky-top) + 8px);
   right: max(10px, var(--safe-right));
   z-index: 1185;
   display: inline-flex;
@@ -1640,9 +1640,9 @@ watch(() => authStore.isLoggedIn, async (isLoggedIn, wasLoggedIn) => {
 
 .settings-sheet {
   position: fixed;
-  top: calc(54px + var(--safe-top));
+  top: calc(var(--app-sticky-top) + 6px);
   right: max(10px, var(--safe-right));
-  bottom: calc(10px + var(--safe-bottom));
+  bottom: var(--app-overlay-bottom-gap);
   width: min(380px, calc(100vw - max(20px, var(--safe-left) + var(--safe-right) + 20px)));
   z-index: 1191;
   background: color-mix(in srgb, var(--color-surface) 96%, transparent);
@@ -1711,7 +1711,7 @@ watch(() => authStore.isLoggedIn, async (isLoggedIn, wasLoggedIn) => {
 
 @media (max-width: 768px) {
   .planner-page {
-    padding: 18px 16px calc(72px + var(--safe-bottom));
+    padding: 18px 16px var(--app-page-bottom-padding-mobile);
   }
 
   .planner-title {
@@ -1737,7 +1737,7 @@ watch(() => authStore.isLoggedIn, async (isLoggedIn, wasLoggedIn) => {
   .settings-sheet {
     left: max(10px, var(--safe-left));
     right: max(10px, var(--safe-right));
-    top: calc(52px + var(--safe-top));
+    top: calc(var(--app-sticky-top) + 8px);
     bottom: auto;
     width: auto;
     max-height: min(58vh, 420px);
@@ -1789,7 +1789,7 @@ watch(() => authStore.isLoggedIn, async (isLoggedIn, wasLoggedIn) => {
 
   .planner-footer {
     position: sticky;
-    bottom: calc(8px + var(--safe-bottom));
+    bottom: calc(8px + var(--app-tabbar-safe-bottom));
     z-index: 15;
     background: color-mix(in srgb, var(--color-surface) 92%, transparent);
     backdrop-filter: blur(8px);

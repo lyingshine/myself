@@ -166,8 +166,8 @@ watch(
 }
 
 .theme-toggle {
-  width: 36px;
-  height: 36px;
+  width: var(--app-control-height-sm-plus);
+  height: var(--app-control-height-sm-plus);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -190,7 +190,7 @@ watch(
 
 .theme-panel {
   position: absolute;
-  top: calc(100% + 8px);
+  top: calc(100% + var(--app-gap-xs));
   right: 0;
   width: 320px;
   background: var(--color-surface);
@@ -216,8 +216,8 @@ watch(
 }
 
 .panel-close {
-  width: 28px;
-  height: 28px;
+  width: var(--app-control-height-2xs);
+  height: var(--app-control-height-2xs);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -235,7 +235,7 @@ watch(
 .themes-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  gap: var(--app-gap-md);
   padding: 20px;
 }
 
@@ -244,7 +244,7 @@ watch(
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: var(--app-gap-xs);
   padding: 12px;
   background: transparent;
   border: 2px solid transparent;

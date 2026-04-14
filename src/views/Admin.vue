@@ -906,7 +906,7 @@ onMounted(async () => {
 .admin-page {
   max-width: var(--layout-max-width);
   margin: 0 auto;
-  padding: 28px var(--layout-gutter) calc(108px + var(--safe-bottom));
+  padding: 28px var(--layout-gutter) calc(var(--app-tabbar-total-height) + 24px);
 }
 
 .admin-notice {
@@ -1697,7 +1697,7 @@ onMounted(async () => {
 
 @media (max-width: 900px) {
   .admin-page {
-    padding: 18px var(--layout-gutter-mobile) calc(84px + var(--safe-bottom));
+    padding: 18px var(--layout-gutter-mobile) calc(var(--app-page-bottom-padding-mobile) + 8px);
   }
 
   .profile-grid {
@@ -1784,7 +1784,7 @@ onMounted(async () => {
     display: flex;
     width: 100%;
     position: sticky;
-    top: calc(46px + var(--safe-top));
+    top: var(--app-sticky-top);
     z-index: 12;
     background: color-mix(in srgb, var(--color-bg) 94%, transparent);
     backdrop-filter: blur(8px);

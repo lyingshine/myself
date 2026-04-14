@@ -4,141 +4,91 @@
       <router-link to="/" class="logo">
         <span class="logo-icon">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-            <path d="M2 17l10 5 10-5"/>
-            <path d="M2 12l10 5 10-5"/>
+            <path d="M12 2L2 7l10 5 10-5-10-5z" />
+            <path d="M2 17l10 5 10-5" />
+            <path d="M2 12l10 5 10-5" />
           </svg>
         </span>
         <span class="logo-text">MySelf</span>
       </router-link>
 
       <div class="nav-right">
-        <ul class="nav-links" :class="{ open: isMenuOpen }">
-          <li class="mobile-primary-duplicate">
-            <router-link to="/" @click="closeMenu" class="nav-item">
-              <span class="nav-icon">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                  <polyline points="9 22 9 12 15 12 15 22"/>
-                </svg>
-              </span>
-              首页
-            </router-link>
-          </li>
-          <li class="mobile-primary-duplicate">
-            <router-link to="/discovery" @click="closeMenu" class="nav-item">
-              <span class="nav-icon">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="10"/>
-                  <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
-                </svg>
-              </span>
-              发现
-            </router-link>
-          </li>
-          <li class="mobile-primary-duplicate">
-            <router-link to="/moments" @click="closeMenu" class="nav-item">
-              <span class="nav-icon">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                </svg>
-              </span>
-              发动态
-            </router-link>
-          </li>
-          <li class="mobile-primary-duplicate">
-            <router-link to="/messages" @click="closeMenu" class="nav-item">
-              <span class="nav-icon">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                </svg>
-              </span>
-              消息
-              <span v-if="notificationsStore.unreadCount > 0" class="nav-badge">
-                {{ notificationsStore.unreadCount > 99 ? '99+' : notificationsStore.unreadCount }}
-              </span>
-            </router-link>
-          </li>
-          <li class="mobile-primary-duplicate">
-            <router-link to="/write" @click="closeMenu" class="nav-item">
-              <span class="nav-icon">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M12 20h9"/>
-                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
-                </svg>
-              </span>
-              写文章
-            </router-link>
-          </li>
-          <li>
-            <router-link to="/planner" @click="closeMenu" class="nav-item">
-              <span class="nav-icon">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="3" y="4" width="18" height="18" rx="2"/>
-                  <path d="M16 2v4M8 2v4M3 10h18"/>
-                  <path d="M8 14h3M8 18h6"/>
-                </svg>
-              </span>
-              工具
-            </router-link>
-          </li>
-          <li v-if="authStore.isAdmin" class="mobile-admin">
-            <router-link to="/admin" @click="closeMenu" class="nav-item">
-              <span class="nav-icon">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="3" y="3" width="7" height="7" rx="1"/>
-                  <rect x="14" y="3" width="7" height="7" rx="1"/>
-                  <rect x="14" y="14" width="7" height="7" rx="1"/>
-                  <rect x="3" y="14" width="7" height="7" rx="1"/>
-                </svg>
-              </span>
-              后台
-            </router-link>
-          </li>
-          <li class="mobile-theme">
-            <ThemeSwitcher />
-          </li>
-          <li v-if="authStore.isLoggedIn" class="mobile-user">
-            <div class="mobile-user-actions">
-              <router-link to="/about" @click="closeMenu" class="mobile-login">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="10"/>
-                  <circle cx="12" cy="10" r="3"/>
-                  <path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"/>
-                </svg>
-                个人资料
+        <div class="nav-center">
+          <ul class="nav-links" :class="{ open: isMenuOpen }">
+            <li
+              v-for="item in centerNavLinks"
+              :key="item.key"
+              :class="{ 'mobile-primary-duplicate': item.mobileMenuDuplicate }"
+            >
+              <router-link :to="item.path" @click="closeMenu" class="nav-item">
+                <span class="nav-icon">
+                  <NavIcon :name="item.icon" :size="16" />
+                </span>
+                {{ item.label }}
+                <span
+                  v-if="item.badge === 'unread' && notificationsStore.unreadCount > 0"
+                  class="nav-badge"
+                >
+                  {{ notificationsStore.unreadCount > 99 ? '99+' : notificationsStore.unreadCount }}
+                </span>
               </router-link>
-              <button class="mobile-logout" @click="handleLogout">
+            </li>
+            <li v-if="authStore.isAdmin" class="mobile-admin">
+              <router-link :to="adminNavLink.path" @click="closeMenu" class="nav-item">
+                <span class="nav-icon">
+                  <NavIcon :name="adminNavLink.icon" :size="16" />
+                </span>
+                {{ adminNavLink.label }}
+              </router-link>
+            </li>
+            <li class="mobile-theme">
+              <ThemeSwitcher />
+            </li>
+            <li v-if="authStore.isLoggedIn" class="mobile-user">
+              <div class="mobile-user-actions">
+                <router-link to="/about" @click="closeMenu" class="mobile-login">
+                  <NavIcon name="user" :size="16" />
+                  个人资料
+                </router-link>
+                <button class="mobile-logout" @click="handleLogout">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                    <polyline points="16 17 21 12 16 7" />
+                    <line x1="21" y1="12" x2="9" y2="12" />
+                  </svg>
+                  退出登录
+                </button>
+              </div>
+            </li>
+            <li v-else class="mobile-user">
+              <router-link to="/login" @click="closeMenu" class="mobile-login">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                  <polyline points="16 17 21 12 16 7"/>
-                  <line x1="21" y1="12" x2="9" y2="12"/>
+                  <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                  <polyline points="10 17 15 12 10 7" />
+                  <line x1="15" y1="12" x2="3" y2="12" />
                 </svg>
-                退出登录
-              </button>
-            </div>
-          </li>
-          <li v-else class="mobile-user">
-            <router-link to="/login" @click="closeMenu" class="mobile-login">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
-                <polyline points="10 17 15 12 10 7"/>
-                <line x1="15" y1="12" x2="3" y2="12"/>
-              </svg>
-              登录
-            </router-link>
-          </li>
-        </ul>
+                登录
+              </router-link>
+            </li>
+          </ul>
+          <button
+            v-if="composeNavLink"
+            type="button"
+            class="nav-item nav-trigger nav-compose"
+            :class="{ active: showComposeMenu }"
+            @click="toggleComposeMenu"
+          >
+            <span class="nav-icon">
+              <NavIcon :name="composeNavLink.icon" :size="16" />
+            </span>
+            {{ composeNavLink.label }}
+          </button>
+        </div>
 
         <div class="nav-actions">
-          <router-link v-if="authStore.isAdmin" to="/admin" class="admin-btn">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="3" width="7" height="7" rx="1"/>
-              <rect x="14" y="3" width="7" height="7" rx="1"/>
-              <rect x="14" y="14" width="7" height="7" rx="1"/>
-              <rect x="3" y="14" width="7" height="7" rx="1"/>
-            </svg>
-            后台
+          <router-link v-if="authStore.isAdmin" :to="adminNavLink.path" class="admin-btn">
+            <NavIcon :name="adminNavLink.icon" :size="16" />
+            {{ adminNavLink.label }}
           </router-link>
           <ThemeSwitcher />
 
@@ -171,18 +121,14 @@
                 </div>
                 <div class="dropdown-divider"></div>
                 <router-link to="/about" class="dropdown-item" @click="closeUserMenu">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <circle cx="12" cy="10" r="3"/>
-                    <path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"/>
-                  </svg>
+                  <NavIcon name="user" :size="16" />
                   个人资料
                 </router-link>
                 <button class="dropdown-item" @click="handleLogout">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                    <polyline points="16 17 21 12 16 7"/>
-                    <line x1="21" y1="12" x2="9" y2="12"/>
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                    <polyline points="16 17 21 12 16 7" />
+                    <line x1="21" y1="12" x2="9" y2="12" />
                   </svg>
                   退出登录
                 </button>
@@ -192,19 +138,47 @@
 
           <router-link v-else to="/login" class="login-btn">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
-              <polyline points="10 17 15 12 10 7"/>
-              <line x1="15" y1="12" x2="3" y2="12"/>
+              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+              <polyline points="10 17 15 12 10 7" />
+              <line x1="15" y1="12" x2="3" y2="12" />
             </svg>
             <span>登录</span>
           </router-link>
 
-          <button class="menu-toggle" :class="{ active: isMenuOpen }" @click="toggleMenu" :aria-expanded="isMenuOpen" aria-label="更多入口">
+          <button
+            class="menu-toggle"
+            :class="{ active: isMenuOpen }"
+            @click="toggleMenu"
+            :aria-expanded="isMenuOpen"
+            aria-label="更多入口"
+          >
             <span class="menu-line" :class="{ open: isMenuOpen }"></span>
           </button>
         </div>
       </div>
     </div>
+    <Transition name="compose-fade">
+      <div v-if="showComposeMenu" class="compose-backdrop" @click="closeComposeMenu"></div>
+    </Transition>
+    <Transition name="compose-pop">
+      <div v-if="showComposeMenu" class="compose-popover">
+        <div class="compose-section">
+          <span class="compose-label">开始创作</span>
+          <button
+            v-for="action in mobileComposeActions"
+            :key="action.key"
+            type="button"
+            class="compose-item"
+            @click="goCompose(action.path)"
+          >
+            <span class="compose-item-icon">
+              <NavIcon :name="action.icon" :size="16" />
+            </span>
+            <span>{{ action.label }}</span>
+          </button>
+        </div>
+      </div>
+    </Transition>
     <div v-if="isMenuOpen" class="mobile-menu-backdrop" @click="closeMenu"></div>
   </nav>
 </template>
@@ -213,9 +187,12 @@
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import ThemeSwitcher from './ThemeSwitcher.vue'
+import NavIcon from './NavIcon.vue'
 import { useAuthStore } from '../stores/auth'
 import { resolveAssetUrl } from '../api'
 import { useNotificationsStore } from '../stores/notifications'
+import { topNavLinks, adminNavLink, mobileComposeActions } from '../config/navigation'
+import { getAvatarText, isImageAvatar } from '../utils/presentation'
 
 const router = useRouter()
 const route = useRoute()
@@ -223,6 +200,9 @@ const authStore = useAuthStore()
 const notificationsStore = useNotificationsStore()
 const isMenuOpen = ref(false)
 const showUserMenu = ref(false)
+const showComposeMenu = ref(false)
+const centerNavLinks = computed(() => topNavLinks.filter((item) => item.action !== 'compose'))
+const composeNavLink = computed(() => topNavLinks.find((item) => item.action === 'compose'))
 
 const toggleMenu = () => {
   isMenuOpen.value = !isMenuOpen.value
@@ -230,6 +210,15 @@ const toggleMenu = () => {
 
 const closeMenu = () => {
   isMenuOpen.value = false
+}
+
+const toggleComposeMenu = () => {
+  showComposeMenu.value = !showComposeMenu.value
+  closeUserMenu()
+}
+
+const closeComposeMenu = () => {
+  showComposeMenu.value = false
 }
 
 const toggleUserMenu = () => {
@@ -240,31 +229,35 @@ const closeUserMenu = () => {
   showUserMenu.value = false
 }
 
-const isImageAvatar = (avatar) =>
-  typeof avatar === 'string' &&
-  /^(https?:\/\/|\/uploads\/|data:image\/)/i.test(avatar)
-
-const userAvatarText = computed(() => {
-  const rawAvatar = authStore.user?.avatar
-  if (isImageAvatar(rawAvatar)) {
-    return (authStore.user?.username || 'U').charAt(0).toUpperCase()
-  }
-  const trimmed = typeof rawAvatar === 'string' ? rawAvatar.trim() : ''
-  if (trimmed) return trimmed.charAt(0).toUpperCase()
-  return (authStore.user?.username || 'U').charAt(0).toUpperCase()
-})
+const userAvatarText = computed(() => getAvatarText(authStore.user?.avatar, authStore.user?.username))
 
 const handleLogout = () => {
   authStore.logout()
   closeUserMenu()
+  closeComposeMenu()
   closeMenu()
   router.push('/')
 }
 
-// 点击外部关闭用户菜单
+const goCompose = (path) => {
+  closeComposeMenu()
+  if (!authStore.isLoggedIn) {
+    router.push('/login')
+    return
+  }
+  if (path.startsWith('/#')) {
+    router.push(path)
+    return
+  }
+  router.push(path)
+}
+
 const handleClickOutside = (e) => {
   if (!e.target.closest('.user-menu')) {
     showUserMenu.value = false
+  }
+  if (!e.target.closest('.compose-popover') && !e.target.closest('.nav-trigger')) {
+    showComposeMenu.value = false
   }
 }
 
@@ -289,10 +282,10 @@ watch(
   () => {
     closeMenu()
     closeUserMenu()
+    closeComposeMenu()
   }
 )
 </script>
-
 <style scoped>
 .navbar {
   position: fixed;
@@ -357,6 +350,17 @@ watch(
   align-items: center;
 }
 
+.nav-center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
 .nav-actions {
   display: flex;
   align-items: center;
@@ -388,11 +392,10 @@ watch(
   display: flex;
   align-items: center;
   gap: 4px;
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  white-space: nowrap;
+}
+
+.nav-compose {
+  flex-shrink: 0;
 }
 
 .nav-links > li {
@@ -412,10 +415,11 @@ watch(
   transition:
     color var(--motion-base) var(--motion-smooth),
     background-color var(--motion-base) var(--motion-smooth),
-    border-color var(--motion-base) var(--motion-smooth),
+    box-shadow var(--motion-base) var(--motion-smooth),
     transform var(--motion-fast) var(--motion-spring);
   position: relative;
   white-space: nowrap;
+  box-shadow: inset 0 0 0 1px transparent;
 }
 
 .nav-badge {
@@ -436,13 +440,24 @@ watch(
 
 .nav-item:hover {
   color: var(--color-text-primary);
-  background: var(--color-surface-elevated);
+  background: var(--color-nav-item-hover-bg);
   transform: translateY(-1px);
 }
 
 .nav-item.router-link-active {
   color: var(--color-text-primary);
-  background: var(--color-surface-elevated);
+  background: var(--color-nav-item-active-bg);
+  box-shadow: inset 0 0 0 1px var(--color-nav-item-active-border);
+}
+
+.nav-item.router-link-active .nav-icon {
+  color: var(--color-nav-item-active-icon);
+  opacity: 1;
+}
+
+.nav-trigger.active {
+  color: var(--color-text-primary);
+  background: var(--color-nav-item-hover-bg);
 }
 
 .nav-icon {
@@ -592,6 +607,92 @@ watch(
   transform: translateY(-8px) scale(0.96);
 }
 
+.compose-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 998;
+  background: transparent;
+}
+
+.compose-popover {
+  position: fixed;
+  top: calc(var(--app-nav-height) + 10px + var(--safe-top));
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(340px, calc(100vw - 24px));
+  padding: 12px;
+  border: 1px solid var(--color-border-light);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--color-surface) 96%, transparent);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  box-shadow: 0 16px 36px rgba(8, 15, 34, 0.18);
+  z-index: 999;
+}
+
+.compose-section {
+  display: grid;
+  gap: 8px;
+}
+
+.compose-label {
+  padding: 2px 4px 0;
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+}
+
+.compose-item {
+  width: 100%;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--color-surface-elevated) 90%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-border-light) 88%, transparent);
+  color: var(--color-text-primary);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.compose-item:hover {
+  background: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface-elevated));
+  border-color: color-mix(in srgb, var(--color-accent) 20%, var(--color-border-light));
+}
+
+.compose-item-icon {
+  width: 18px;
+  display: inline-flex;
+  justify-content: center;
+  color: var(--color-accent);
+}
+
+.compose-divider {
+  height: 1px;
+  margin: 10px 0;
+  background: var(--color-border-light);
+}
+
+.compose-fade-enter-active,
+.compose-fade-leave-active,
+.compose-pop-enter-active,
+.compose-pop-leave-active {
+  transition: all var(--motion-base) var(--motion-spring);
+}
+
+.compose-fade-enter-from,
+.compose-fade-leave-to,
+.compose-pop-enter-from,
+.compose-pop-leave-to {
+  opacity: 0;
+}
+
+.compose-pop-enter-from,
+.compose-pop-leave-to {
+  transform: translate(-50%, -8px) scale(0.98);
+}
+
 .menu-toggle {
   display: none;
   width: 38px;
@@ -665,6 +766,11 @@ watch(
 }
 
 @media (max-width: 768px) {
+  .compose-popover,
+  .compose-backdrop {
+    display: none;
+  }
+
   .mobile-primary-duplicate {
     display: none;
   }
@@ -676,13 +782,21 @@ watch(
 
   .nav-right {
     margin-left: auto;
+    position: static;
   }
 
   .nav-actions .theme-switcher,
   .nav-actions .admin-btn,
   .nav-actions .login-btn,
-  .nav-actions .user-menu {
+  .nav-actions .user-menu,
+  .nav-compose {
     display: none;
+  }
+
+  .nav-center {
+    position: static;
+    transform: none;
+    display: block;
   }
 
   .menu-toggle {
@@ -691,11 +805,11 @@ watch(
 
   .nav-links {
     position: fixed;
-    top: calc(44px + var(--safe-top));
+    top: var(--app-sticky-top);
     left: max(10px, var(--safe-left));
     right: max(10px, var(--safe-right));
-    max-height: calc(100dvh - 56px - var(--safe-top) - var(--safe-bottom));
-    min-height: min(340px, calc(100dvh - 80px - var(--safe-top) - var(--safe-bottom)));
+    max-height: calc(100dvh - var(--app-nav-height) - var(--safe-top) - var(--safe-bottom) - 12px);
+    min-height: min(340px, calc(100dvh - var(--app-nav-height) - var(--safe-top) - var(--safe-bottom) - 36px));
     overflow-y: auto;
     flex-direction: column;
     gap: 0;
@@ -760,18 +874,18 @@ watch(
   }
 
   .nav-item:hover {
-    background: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface-elevated));
-    border-color: color-mix(in srgb, var(--color-accent) 24%, var(--color-border-light));
+    background: var(--color-nav-item-hover-bg);
+    border-color: color-mix(in srgb, var(--color-nav-item-active-border) 66%, var(--color-border-light));
   }
 
   .nav-item.router-link-active {
     color: var(--color-text-primary);
-    background: color-mix(in srgb, var(--color-accent) 16%, var(--color-surface-elevated));
-    border-color: color-mix(in srgb, var(--color-accent) 36%, var(--color-border));
+    background: var(--color-nav-item-active-bg);
+    border-color: var(--color-nav-item-active-border);
   }
 
   .nav-item.router-link-active .nav-icon {
-    color: var(--color-accent);
+    color: var(--color-nav-item-active-icon);
     opacity: 1;
   }
 
@@ -839,9 +953,10 @@ watch(
 
   .mobile-menu-backdrop {
     position: fixed;
-    inset: calc(44px + var(--safe-top)) 0 0;
+    inset: var(--app-sticky-top) 0 0;
     background: rgba(0, 0, 0, 0.32);
     z-index: 1000;
   }
 }
 </style>
+

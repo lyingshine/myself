@@ -1,92 +1,17 @@
 ﻿const API_BASE = 'http://localhost:3000/api'
 
-const LOAD_PRESET = (process.env.LOAD_PRESET || 'medium').toLowerCase()
+const {
+  LOAD_PRESETS,
+  resolvePreset,
+  estimateTargetRpm,
+  sanitizeScaleConfig
+} = require('./simulatorScale')
+const simulatorStorage = require('./simulatorStorage')
+const { createSimulatorScheduler } = require('./simulatorScheduler')
+const { createSimulatorRuntime } = require('./simulatorRuntime')
+const { createSimulatorControl } = require('./simulatorControl')
+const { createSimulatorCleanup } = require('./simulatorCleanup')
 
-const LOAD_PRESETS = {
-  low: {
-    id: 'low',
-    label: '低压',
-    description: '适合本地联调，整体节奏保守。',
-    maxRegisteredUsers: 10000,
-    peakOnlineUsers: 1200,
-    baseRegistrationRate: 0.2,
-    baseLoginRate: 5,
-    concurrentRequests: 120,
-    actionMultiplier: 1.2,
-    visitorRatio: 0.08,
-    sessionDurationMultiplier: 0.9,
-    cooldownMultiplier: 1.1,
-    actionIntervalMultiplier: 1,
-    writeMultiplier: 0.7,
-    cohortMix: { ACTIVE_VETERAN: 0.16, SILENT_VETERAN: 0.76, NEW_USER: 0.08 },
-    loginBias: { ACTIVE_VETERAN: 2.2, SILENT_VETERAN: 1.0, NEW_USER: 0.9 }
-  },
-  medium: {
-    id: 'medium',
-    label: '中压',
-    description: '默认压测档，读流量和写流量比较均衡。',
-    maxRegisteredUsers: 100000,
-    peakOnlineUsers: 12000,
-    baseRegistrationRate: 2,
-    baseLoginRate: 20,
-    concurrentRequests: 900,
-    actionMultiplier: 4,
-    visitorRatio: 0.12,
-    sessionDurationMultiplier: 1,
-    cooldownMultiplier: 1,
-    actionIntervalMultiplier: 1,
-    writeMultiplier: 1,
-    cohortMix: { ACTIVE_VETERAN: 0.18, SILENT_VETERAN: 0.72, NEW_USER: 0.1 },
-    loginBias: { ACTIVE_VETERAN: 2.4, SILENT_VETERAN: 1.0, NEW_USER: 0.85 }
-  },
-  high: {
-    id: 'high',
-    label: '高压',
-    description: '明显拉高在线、动作速度和排队压力。',
-    maxRegisteredUsers: 1000000,
-    peakOnlineUsers: 45000,
-    baseRegistrationRate: 6,
-    baseLoginRate: 65,
-    concurrentRequests: 3200,
-    actionMultiplier: 10,
-    visitorRatio: 0.18,
-    sessionDurationMultiplier: 1.2,
-    cooldownMultiplier: 0.75,
-    actionIntervalMultiplier: 0.72,
-    writeMultiplier: 1.35,
-    cohortMix: { ACTIVE_VETERAN: 0.22, SILENT_VETERAN: 0.66, NEW_USER: 0.12 },
-    loginBias: { ACTIVE_VETERAN: 2.7, SILENT_VETERAN: 1.0, NEW_USER: 1.05 }
-  },
-  extreme: {
-    id: 'extreme',
-    label: '极限',
-    description: '尽量把登录、请求和写入速度都压上去。',
-    maxRegisteredUsers: 10000000,
-    peakOnlineUsers: 120000,
-    baseRegistrationRate: 12,
-    baseLoginRate: 160,
-    concurrentRequests: 9000,
-    actionMultiplier: 18,
-    visitorRatio: 0.22,
-    sessionDurationMultiplier: 1.35,
-    cooldownMultiplier: 0.55,
-    actionIntervalMultiplier: 0.5,
-    writeMultiplier: 1.8,
-    cohortMix: { ACTIVE_VETERAN: 0.26, SILENT_VETERAN: 0.6, NEW_USER: 0.14 },
-    loginBias: { ACTIVE_VETERAN: 3.0, SILENT_VETERAN: 1.0, NEW_USER: 1.2 }
-  }
-}
-
-function clonePreset(preset) {
-  return JSON.parse(JSON.stringify(preset))
-}
-
-function resolvePreset(presetId = LOAD_PRESET) {
-  if (presetId && LOAD_PRESETS[presetId]) {
-    return clonePreset(LOAD_PRESETS[presetId])
-  }
-  return clonePreset(LOAD_PRESETS.medium)
-}
 
 let currentScale = resolvePreset()
 
@@ -213,35 +138,8 @@ function getMaxConcurrent() {
   return currentScale.concurrentRequests
 }
 
-function estimateTargetRpm(config = currentScale) {
-  const onlineFactor = Math.max(1, config.peakOnlineUsers / 40)
-  const speedFactor = Math.max(1, config.actionMultiplier * (2 - Math.min(1.5, config.actionIntervalMultiplier || 1)))
-  const queueFactor = Math.max(1, config.concurrentRequests / 10)
-  return Math.round(Math.min(queueFactor * 60, onlineFactor * speedFactor * 16))
-}
-
 function sanitizeConfig(input) {
-  const next = {
-    ...currentScale,
-    ...input
-  }
-
-  next.maxRegisteredUsers = Math.max(1000, Math.round(Number(next.maxRegisteredUsers || currentScale.maxRegisteredUsers)))
-  next.peakOnlineUsers = Math.max(10, Math.round(Number(next.peakOnlineUsers || currentScale.peakOnlineUsers)))
-  next.baseRegistrationRate = Math.max(0.05, Number(next.baseRegistrationRate || currentScale.baseRegistrationRate))
-  next.baseLoginRate = Math.max(0.5, Number(next.baseLoginRate || currentScale.baseLoginRate))
-  next.concurrentRequests = Math.max(10, Math.round(Number(next.concurrentRequests || currentScale.concurrentRequests)))
-  next.actionMultiplier = Math.max(0.5, Number(next.actionMultiplier || currentScale.actionMultiplier))
-  next.visitorRatio = clamp(Number(next.visitorRatio ?? currentScale.visitorRatio), 0, 0.9)
-  next.sessionDurationMultiplier = Math.max(0.3, Number(next.sessionDurationMultiplier || currentScale.sessionDurationMultiplier))
-  next.cooldownMultiplier = Math.max(0.2, Number(next.cooldownMultiplier || currentScale.cooldownMultiplier))
-  next.actionIntervalMultiplier = Math.max(0.2, Number(next.actionIntervalMultiplier || currentScale.actionIntervalMultiplier))
-  next.writeMultiplier = Math.max(0.1, Number(next.writeMultiplier || currentScale.writeMultiplier || 1))
-  next.id = next.id || 'custom'
-  next.label = next.label || '自定义压测'
-  next.description = next.description || '当前正在使用自定义调速参数。'
-  next.estimatedPeakRpm = estimateTargetRpm(next)
-  return next
+  return sanitizeScaleConfig(input, currentScale)
 }
 
 currentScale = sanitizeConfig(currentScale)
@@ -1509,511 +1407,190 @@ let isRunning = false
 let isPaused = false
 let pausedAt = 0
 
+const simulatorScheduler = createSimulatorScheduler({
+  isRunning: () => isRunning,
+  isPaused: () => isPaused,
+  getEpoch: () => simulatorEpoch,
+  getCurrentScale: () => currentScale,
+  getRegisteredUsers: () => registeredUsers,
+  getRunGeneratedUsernames: () => runGeneratedUsernames,
+  getStats: () => stats,
+  getLoginInFlight: () => loginInFlight,
+  getActiveSessions: () => activeSessions,
+  getStockPassword: () => SIM_STOCK_PASSWORD,
+  getNewUserWarmupMs,
+  getActivityMultiplier,
+  getRampBoost,
+  getVisitorPulseMultiplier,
+  getIntakeValve,
+  canAttemptLoginNow,
+  pickLoginCandidate,
+  generateRegistrationIdentity,
+  enrichProfileAsStockUser,
+  normalizeUserProfile,
+  rememberUser,
+  ensureSocialCircle,
+  inferUserType,
+  createVisitorSession,
+  apiRequest,
+  Session,
+  sleep,
+  randomInt
+})
+
 async function waitWhilePaused(epoch) {
-  while (isRunning && isPaused && epoch === simulatorEpoch) {
-    await sleep(200)
-  }
+  return simulatorScheduler.waitWhilePaused(epoch)
 }
 
 async function scheduleRegistrations() {
-  const epoch = simulatorEpoch
-  while (isRunning && epoch === simulatorEpoch) {
-    await waitWhilePaused(epoch)
-    if (!isRunning || epoch !== simulatorEpoch) break
-
-    const baseDelay = 1000 / currentScale.baseRegistrationRate
-    const activity = Math.max(0.8, getActivityMultiplier())
-    const throughputBoost = getRampBoost()
-    const delay = (baseDelay / activity) / (Math.max(0.5, currentScale.actionMultiplier) * throughputBoost)
-    await sleep(Math.max(15, randomInt(delay * 0.7, delay * 1.15)))
-    if (!isRunning || epoch !== simulatorEpoch) break
-    if (isPaused) continue
-
-    if (registeredUsers.length >= currentScale.maxRegisteredUsers) {
-      await sleep(5000)
-      continue
-    }
-
-    const { username, email } = generateRegistrationIdentity()
-    const data = await apiRequest('/auth/register', {
-      method: 'POST',
-      body: JSON.stringify({
-        username,
-        email,
-        password: SIM_STOCK_PASSWORD
-      })
-    })
-
-    if (data?.success) {
-      runGeneratedUsernames.add(data.data.user.username || username)
-      const profile = enrichProfileAsStockUser(normalizeUserProfile({
-        id: data.data.user.id,
-        dbUserId: data.data.user.id,
-        username: data.data.user.username,
-        token: data.data.token,
-        refreshToken: data.data.refreshToken || null,
-        loginCount: 0,
-        articleCount: 0,
-        statusCount: 0,
-        browses: 0,
-        registrationTime: Date.now(),
-        userType: 'NEW_USER',
-        nextLoginAt: Date.now() + getNewUserWarmupMs()
-      }))
-      registeredUsers.push(profile)
-      rememberUser(profile)
-      ensureSocialCircle(profile)
-      stats.registrations++
-    }
-  }
+  return simulatorScheduler.scheduleRegistrations()
 }
 
 async function scheduleLogins() {
-  const epoch = simulatorEpoch
-  while (isRunning && epoch === simulatorEpoch) {
-    await waitWhilePaused(epoch)
-    if (!isRunning || epoch !== simulatorEpoch) break
-
-    if (!canAttemptLoginNow()) {
-      await sleep(20)
-      continue
-    }
-
-    const baseDelay = 1000 / currentScale.baseLoginRate
-    const activity = Math.max(0.8, getActivityMultiplier())
-    const throughputBoost = getRampBoost()
-    const delay = (baseDelay / activity) / (Math.max(0.5, currentScale.actionMultiplier) * throughputBoost)
-    await sleep(Math.max(8, randomInt(delay * 0.7, delay * 1.15)))
-    if (!isRunning || epoch !== simulatorEpoch) break
-    if (isPaused) continue
-    if (registeredUsers.length === 0) continue
-
-    const candidate = pickLoginCandidate()
-    if (!candidate) continue
-    if (loginInFlight.has(candidate.id)) continue
-    loginInFlight.add(candidate.id)
-
-    try {
-      const data = await apiRequest('/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({ username: candidate.username, password: SIM_STOCK_PASSWORD })
-      })
-
-      if (data?.success) {
-        candidate.token = data.data.token
-        candidate.refreshToken = data.data.refreshToken || null
-        candidate.dbUserId = Number(data?.data?.user?.id || candidate.dbUserId || 0)
-        rememberUser(candidate)
-        ensureSocialCircle(candidate)
-        candidate.loginCount = (candidate.loginCount || 0) + 1
-        candidate.userType = inferUserType(candidate)
-
-        const session = new Session(candidate, candidate.userType)
-        activeSessions.set(candidate.id, session)
-        stats.logins++
-        session.run().then(() => activeSessions.delete(candidate.id))
-      }
-    } finally {
-      loginInFlight.delete(candidate.id)
-    }
-  }
+  return simulatorScheduler.scheduleLogins()
 }
 
 async function scheduleVisitors() {
-  if (currentScale.visitorRatio <= 0) return
-
-  const epoch = simulatorEpoch
-  while (isRunning && epoch === simulatorEpoch) {
-    await waitWhilePaused(epoch)
-    if (!isRunning || epoch !== simulatorEpoch) break
-
-    const activity = getActivityMultiplier()
-    const pulse = getVisitorPulseMultiplier() * getIntakeValve()
-
-    const nonVisitorOnline = Array.from(activeSessions.values()).filter((s) => !s.user.isVisitor).length
-    const currentVisitors = Array.from(activeSessions.values()).filter((s) => s.user.isVisitor).length
-
-    const targetByShare = Math.ceil((nonVisitorOnline * currentScale.visitorRatio) / Math.max(0.01, 1 - currentScale.visitorRatio))
-    const targetVisitors = Math.max(0, Math.round(targetByShare * pulse))
-
-    if (currentVisitors >= targetVisitors) {
-      await sleep(4000)
-      continue
-    }
-
-    const deficit = Math.max(1, targetVisitors - currentVisitors)
-    const visitorArrivalRate = Math.max(0.2, currentScale.baseLoginRate * currentScale.visitorRatio * (deficit / 20))
-    const baseDelay = 1000 / visitorArrivalRate
-    const delay = (baseDelay / activity) / Math.max(0.5, currentScale.actionMultiplier)
-    await sleep(Math.max(100, randomInt(delay * 0.7, delay * 1.3)))
-
-    if (!isRunning || epoch !== simulatorEpoch) break
-    if (isPaused) continue
-
-    const session = createVisitorSession()
-    activeSessions.set(session.user.id, session)
-    session.run().then(() => activeSessions.delete(session.user.id))
-  }
+  return simulatorScheduler.scheduleVisitors()
 }
+const simulatorRuntime = createSimulatorRuntime({
+  isRunning: () => isRunning,
+  isPaused: () => isPaused,
+  setIsRunning: (value) => { isRunning = value },
+  setIsPaused: (value) => { isPaused = value },
+  getPausedAt: () => pausedAt,
+  setPausedAt: (value) => { pausedAt = value },
+  incrementEpoch: () => { simulatorEpoch += 1 },
+  getCurrentScale: () => currentScale,
+  getStats: () => stats,
+  getActiveSessions: () => activeSessions,
+  getRegisteredUsers: () => registeredUsers,
+  getRunGeneratedUsernames: () => runGeneratedUsernames,
+  getLoginInFlight: () => loginInFlight,
+  getIntervalHandles: () => intervalHandles,
+  getActiveRequests: () => activeRequests,
+  setActiveRequests: (value) => { activeRequests = value },
+  getLoginWorkers: () => LOGIN_WORKERS,
+  getIntakeValve: () => intakeValve,
+  getLoginValveState: () => loginValve,
+  getStockPassword: () => SIM_STOCK_PASSWORD,
+  estimateTargetRpm,
+  getSeedStatus,
+  loadSimUsersFromDb,
+  scheduleLogins,
+  scheduleVisitors,
+  writeSessionFile,
+  writeUsersFile,
+  readSessionFile,
+  cleanupRunGeneratedData,
+  getMaxConcurrent,
+  getLoginValve,
+  apiRequest,
+  Session,
+  rememberUser,
+  ensureSocialCircle,
+  inferUserType,
+  createVisitorSession,
+  resetStats,
+  resetForStart: () => {
+    completedSessions = []
+    registeredUsers = []
+    runGeneratedUsernames = new Set()
+    userByUsername = new Map()
+  },
+  setCompletedSessions: (list) => { completedSessions = list },
+  clearLoginInFlight: () => { loginInFlight.clear() }
+})
 
 async function reconnectSessions() {
-  const lastData = readSessionFile()
-  if (!lastData.active.length) return
-
-  console.log(`[Sim] 正在恢复上次在线会话：${lastData.active.length} 个`)
-
-  const reconnectPromises = lastData.active.map(async (saved) => {
-    try {
-      if (saved.username === 'visitor') return
-
-      const profile = registeredUsers.find((u) => u.username === saved.username)
-      if (!profile || activeSessions.has(profile.id)) return
-
-      const data = await apiRequest('/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({ username: profile.username, password: SIM_STOCK_PASSWORD })
-      })
-
-      if (data?.success) {
-        profile.token = data.data.token
-        profile.refreshToken = data.data.refreshToken || null
-        profile.dbUserId = Number(data?.data?.user?.id || profile.dbUserId || 0)
-        rememberUser(profile)
-        ensureSocialCircle(profile)
-        profile.loginCount = (profile.loginCount || 0) + 1
-        profile.userType = saved.type || inferUserType(profile)
-
-        const session = new Session(profile, profile.userType)
-        activeSessions.set(profile.id, session)
-        stats.logins++
-        session.run().then(() => activeSessions.delete(profile.id))
-      }
-    } catch (err) {
-      // ignore reconnect errors
-    }
-  })
-
-  await Promise.allSettled(reconnectPromises)
-  console.log(`[Sim] 已恢复在线用户：${activeSessions.size} 个`)
-}
-
-function summarizeComposition() {
-  const sessions = Array.from(activeSessions.values())
-  const total = sessions.length || 1
-  const activeVeterans = sessions.filter((s) => s.type === 'ACTIVE_VETERAN').length
-  const silentVeterans = sessions.filter((s) => s.type === 'SILENT_VETERAN').length
-  const newUsers = sessions.filter((s) => s.type === 'NEW_USER').length
-  const visitors = sessions.filter((s) => s.type === 'VISITOR').length
-
-  return {
-    activeVeterans,
-    silentVeterans,
-    newUsers,
-    visitors,
-    activePct: ((activeVeterans / total) * 100).toFixed(1),
-    silentPct: ((silentVeterans / total) * 100).toFixed(1),
-    newPct: ((newUsers / total) * 100).toFixed(1),
-    visitorPct: ((visitors / total) * 100).toFixed(1)
-  }
+  return simulatorRuntime.reconnectSessions()
 }
 
 async function startSimulator() {
-  if (isRunning && isPaused) {
-    resumeSimulator()
-    return
-  }
-  if (isRunning) return
-  isRunning = true
-  isPaused = false
-  pausedAt = 0
-  simulatorEpoch += 1
-  resetStats()
-  completedSessions = []
-  registeredUsers = []
-  runGeneratedUsernames = new Set()
-  userByUsername = new Map()
-
-  console.log(`[Sim] 启动压测模拟器，当前预设：${currentScale.label}`)
-  console.log(
-    `[Sim] 配置：注册用户池 ${currentScale.maxRegisteredUsers.toLocaleString()} | 峰值在线目标 ${currentScale.peakOnlineUsers.toLocaleString()} | 估算峰值请求 ${estimateTargetRpm(currentScale).toLocaleString()} rpm | 最大并发请求 ${currentScale.concurrentRequests}`
-  )
-  console.log(`[Sim] 说明：${currentScale.description}`)
-  console.log(`[Sim] 游客占比 ${(currentScale.visitorRatio * 100).toFixed(1)}% | 写入倍率 ${currentScale.writeMultiplier.toFixed(2)}x`)
-  console.log('[Sim] 已禁用恢复机制：本次从空状态启动')
-  const seed = await getSeedStatus()
-  if (!seed.ready) {
-    isRunning = false
-    throw new Error(
-      `请先生成初始数据：当前模拟用户 ${seed.users}，文章 ${seed.articles}，动态 ${seed.statuses}，要求文章/动态至少 ${seed.targetContent}`
-    )
-  }
-
-  await loadSimUsersFromDb()
-
-  for (let i = 0; i < LOGIN_WORKERS; i++) {
-    scheduleLogins()
-  }
-  scheduleVisitors()
-
-  const statsInterval = setInterval(() => {
-    const elapsed = (Date.now() - stats.startTime) / 1000
-    const apm = ((stats.articles / elapsed) * 60).toFixed(0)
-    const spm = ((stats.statuses / elapsed) * 60).toFixed(0)
-    const bpm = ((stats.browses / elapsed) * 60).toFixed(0)
-    const errRate = stats.totalRequests > 0 ? ((stats.failedRequests / stats.totalRequests) * 100).toFixed(1) : 0
-    const c = summarizeComposition()
-
-    console.log(
-      `[Sim] 注册用户 ${registeredUsers.length.toLocaleString()} | 在线 ${activeSessions.size.toLocaleString()} (` +
-        `活跃老用户 ${c.activeVeterans} (${c.activePct}%) / 沉默老用户 ${c.silentVeterans} (${c.silentPct}%) / 新用户 ${c.newUsers} (${c.newPct}%) / 游客 ${c.visitors} (${c.visitorPct}%)) ` +
-        `| 发文 ${apm} 篇/分钟 | 动态 ${spm} 条/分钟 | 浏览 ${bpm} 次/分钟 | 错误率 ${errRate}% | 请求队列 ${activeRequests}/${getMaxConcurrent()}`
-    )
-    console.log(
-      `[Sim] 当前预设：${currentScale.label} | 峰值在线目标：${currentScale.peakOnlineUsers.toLocaleString()} | 注册用户池：${currentScale.maxRegisteredUsers.toLocaleString()}`
-    )
-  }, 30000)
-  intervalHandles.add(statsInterval)
-
-  const sessionFlushInterval = setInterval(() => {
-    writeSessionFile().catch(() => {})
-  }, 10000)
-  intervalHandles.add(sessionFlushInterval)
-
-  const userFlushInterval = setInterval(() => {
-    writeUsersFile().catch(() => {})
-  }, 10000)
-  intervalHandles.add(userFlushInterval)
+  return simulatorRuntime.startSimulator()
 }
-const fs = require('fs')
-const path = require('path')
-const SESSION_FILE = path.join(__dirname, '..', 'data', 'sim_sessions.json')
-const USERS_FILE = path.join(__dirname, '..', 'data', 'sim_users.json')
-
 async function writeSessionFile() {
-  try {
-    const data = {
-      active: Array.from(activeSessions.values()).map((s) => ({
-        id: s.user.id,
-        username: s.user.username,
-        type: s.type,
-        onlineTime: Date.now() - s.startTime,
-        remaining: s.duration - (Date.now() - s.startTime)
-      })),
-      completed: completedSessions
-    }
-    await fs.promises.writeFile(SESSION_FILE, JSON.stringify(data))
-  } catch (err) {
-    // ignore write errors in simulator
+  const data = {
+    active: Array.from(activeSessions.values()).map((s) => ({
+      id: s.user.id,
+      username: s.user.username,
+      type: s.type,
+      onlineTime: Date.now() - s.startTime,
+      remaining: s.duration - (Date.now() - s.startTime)
+    })),
+    completed: completedSessions
   }
+  await simulatorStorage.writeSessionSnapshot(data)
 }
 
 async function writeUsersFile() {
-  try {
-    await fs.promises.writeFile(USERS_FILE, JSON.stringify(registeredUsers))
-  } catch (err) {
-    // ignore write errors in simulator
-  }
+  await simulatorStorage.writeUsersSnapshot(registeredUsers)
 }
 
 function readSessionFile() {
-  try {
-    if (fs.existsSync(SESSION_FILE)) {
-      return JSON.parse(fs.readFileSync(SESSION_FILE, 'utf-8'))
-    }
-  } catch (err) {
-    // ignore read errors
-  }
-  return { active: [], completed: [] }
+  return simulatorStorage.readSessionSnapshot()
 }
 
 function readUsersFile() {
-  try {
-    if (fs.existsSync(USERS_FILE)) {
-      return JSON.parse(fs.readFileSync(USERS_FILE, 'utf-8'))
-    }
-  } catch (err) {
-    // ignore read errors
-  }
-  return []
+  return simulatorStorage.readUsersSnapshot()
 }
 
+const simulatorCleanup = createSimulatorCleanup({
+  getRunGeneratedUsernames: () => runGeneratedUsernames,
+  clearRunGeneratedUsernames: () => runGeneratedUsernames.clear(),
+  dbWrite: (...args) => pool.write(...args)
+})
+
 async function cleanupRunGeneratedData() {
-  const usernames = Array.from(runGeneratedUsernames).filter((name) => typeof name === 'string' && name.trim())
-  if (!usernames.length) return
-
-  const chunkSize = 500
-  let deleted = 0
-  for (let i = 0; i < usernames.length; i += chunkSize) {
-    const chunk = usernames.slice(i, i + chunkSize)
-    const placeholders = chunk.map(() => '?').join(', ')
-    const [result] = await pool.write(`DELETE FROM users WHERE username IN (${placeholders})`, chunk)
-    deleted += Number(result?.affectedRows || 0)
-  }
-
-  runGeneratedUsernames.clear()
-  console.log(`[Sim] 已清理本轮模拟数据用户：${deleted} 个`)
+  return simulatorCleanup.cleanupRunGeneratedData()
 }
 
 async function stopSimulator(options = {}) {
-  const { cleanupGeneratedData = false } = options
-  isRunning = false
-  isPaused = false
-  pausedAt = 0
-  simulatorEpoch += 1
-  for (const session of activeSessions.values()) session.isAlive = false
-  activeSessions.clear()
-  // 停止后不再展示历史会话，后台活动面板应立即归零。
-  completedSessions = []
-  loginInFlight.clear()
-  activeRequests = 0
-  for (const handle of intervalHandles) clearInterval(handle)
-  intervalHandles.clear()
-  // 立即落盘，避免读取到旧的 active/completed 残留。
-  await writeSessionFile().catch(() => {})
-  if (cleanupGeneratedData) {
-    await cleanupRunGeneratedData().catch((err) => {
-      console.error('[Sim] 清理本轮模拟数据失败:', err?.message || err)
-    })
-  }
-  console.log('[Sim] 模拟器已停止')
+  return simulatorRuntime.stopSimulator(options)
 }
 
 function pauseSimulator() {
-  if (!isRunning || isPaused) return
-  isPaused = true
-  pausedAt = Date.now()
-  console.log('[Sim] 模拟器已暂停')
+  return simulatorRuntime.pauseSimulator()
 }
 
 function resumeSimulator() {
-  if (!isRunning || !isPaused) return
-  const pausedDuration = Math.max(0, Date.now() - pausedAt)
-  isPaused = false
-  pausedAt = 0
-
-  // 将暂停时长补回会话与登录冷却，避免暂停期间被“偷走”运行时间。
-  for (const session of activeSessions.values()) {
-    session.startTime += pausedDuration
-  }
-  for (const user of registeredUsers) {
-    if (user && user.nextLoginAt) {
-      user.nextLoginAt += pausedDuration
-    }
-  }
-  stats.startTime += pausedDuration
-  console.log('[Sim] 模拟器已继续运行')
+  return simulatorRuntime.resumeSimulator()
 }
 
 function getActiveSessions() {
-  if (!isRunning) return []
-  const data = readSessionFile()
-  return data.active
+  return simulatorRuntime.getActiveSessionsSnapshot()
 }
 
 function getCompletedSessions() {
-  if (!isRunning) return []
-  const data = readSessionFile()
-  return data.completed
+  return simulatorRuntime.getCompletedSessionsSnapshot()
 }
 
 function getRuntimeStats() {
-  const elapsed = Math.max(1, (Date.now() - stats.startTime) / 1000)
-  return {
-    state: isRunning ? (isPaused ? 'paused' : 'running') : 'stopped',
-    running: isRunning,
-    paused: isPaused,
-    scale: currentScale.label,
-    presetId: currentScale.id,
-    description: currentScale.description,
-    peakOnlineTarget: currentScale.peakOnlineUsers,
-    maxRegisteredUsers: currentScale.maxRegisteredUsers,
-    targetPeakRpm: estimateTargetRpm(currentScale),
-    controls: {
-      baseRegistrationRate: currentScale.baseRegistrationRate,
-      baseLoginRate: currentScale.baseLoginRate,
-      concurrentRequests: currentScale.concurrentRequests,
-      actionMultiplier: currentScale.actionMultiplier,
-      actionIntervalMultiplier: currentScale.actionIntervalMultiplier,
-      sessionDurationMultiplier: currentScale.sessionDurationMultiplier,
-      cooldownMultiplier: currentScale.cooldownMultiplier,
-      visitorRatio: currentScale.visitorRatio,
-      writeMultiplier: currentScale.writeMultiplier
-    },
-    queue: {
-      active: activeRequests,
-      limit: getMaxConcurrent()
-    },
-    valve: {
-      intake: intakeValve.value,
-      p95LatencyMs: intakeValve.lastPressure.p95LatencyMs,
-      errorRate: intakeValve.lastPressure.errorRate,
-      queueUsage: intakeValve.lastPressure.queueUsage,
-      target: intakeValve.lastPressure.target,
-      loginIntake: loginValve.value,
-      loginP95LatencyMs: loginValve.lastP95,
-      loginErrorRate: loginValve.lastErrorRate,
-      loginInFlight: loginInFlight.size,
-      loginCap: Math.max(1, Math.floor(LOGIN_WORKERS * getLoginValve()))
-    },
-    totals: {
-      registrations: stats.registrations,
-      logins: stats.logins,
-      articles: stats.articles,
-      statuses: stats.statuses,
-      browses: stats.browses,
-      likes: stats.likes,
-      requests: stats.totalRequests,
-      failedRequests: stats.failedRequests
-    },
-    ratesPerMinute: {
-      articles: (stats.articles / elapsed) * 60,
-      statuses: (stats.statuses / elapsed) * 60,
-      browses: (stats.browses / elapsed) * 60
-    },
-    errorRate: stats.totalRequests > 0 ? stats.failedRequests / stats.totalRequests : 0
-  }
+  return simulatorRuntime.getRuntimeStats()
 }
+const simulatorControl = createSimulatorControl({
+  isRunning: () => isRunning,
+  getCurrentScale: () => currentScale,
+  setCurrentScale: (value) => { currentScale = value },
+  getLoadPresets: () => LOAD_PRESETS,
+  estimateTargetRpm,
+  sanitizeConfig,
+  resolvePreset,
+  stopSimulator,
+  startSimulator,
+  getRuntimeStats
+})
 
 function getAvailablePresets() {
-  return Object.values(LOAD_PRESETS).map((preset) => ({
-    id: preset.id,
-    label: preset.label,
-    description: preset.description,
-    maxRegisteredUsers: preset.maxRegisteredUsers,
-    peakOnlineTarget: preset.peakOnlineUsers,
-    targetPeakRpm: estimateTargetRpm(preset)
-  }))
+  return simulatorControl.getAvailablePresets()
 }
 
 async function applyPreset(presetId) {
-  const preset = LOAD_PRESETS[presetId]
-  if (!preset) {
-    throw new Error(`Unknown load preset: ${presetId}`)
-  }
-
-  const wasRunning = isRunning
-  if (wasRunning) await stopSimulator({ cleanupGeneratedData: false })
-
-  currentScale = sanitizeConfig(resolvePreset(presetId))
-
-  if (wasRunning) await startSimulator()
-  return getRuntimeStats()
+  return simulatorControl.applyPreset(presetId)
 }
 
 async function updateConfig(partialConfig = {}) {
-  const wasRunning = isRunning
-  if (wasRunning) await stopSimulator({ cleanupGeneratedData: false })
-
-  currentScale = sanitizeConfig({
-    ...currentScale,
-    ...partialConfig,
-    id: 'custom',
-    label: '自定义压测',
-    description: '当前正在使用自定义调速参数。'
-  })
-
-  if (wasRunning) await startSimulator()
-  return getRuntimeStats()
+  return simulatorControl.updateConfig(partialConfig)
 }
 
 module.exports = {
@@ -2033,4 +1610,5 @@ module.exports = {
   applyPreset,
   updateConfig
 }
+
 

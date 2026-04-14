@@ -214,6 +214,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import apiService from '../api'
+import { formatRelativeZh } from '../utils/presentation'
 
 const authStore = useAuthStore()
 
@@ -255,28 +256,7 @@ const applyHint = (text) => {
   }
 }
 
-const formatDate = (dateStr) => {
-  const date = new Date(dateStr)
-  const now = new Date()
-  const diff = now - date
-
-  const minute = 60 * 1000
-  const hour = 60 * minute
-  const day = 24 * hour
-
-  if (diff < minute) return '刚刚'
-  if (diff < hour) return `${Math.floor(diff / minute)} 分钟前`
-  if (diff < day) return `${Math.floor(diff / hour)} 小时前`
-  if (diff < 7 * day) return `${Math.floor(diff / day)} 天前`
-
-  return date.toLocaleDateString('zh-CN', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
+const formatDate = (dateStr) => formatRelativeZh(dateStr, { absoluteWithTime: true })
 
 const normalizeStatus = (s = {}) => ({
   ...s,
@@ -1197,7 +1177,7 @@ onUnmounted(() => {
 
 @media (max-width: 768px) {
   .moments-page {
-    padding: 18px var(--layout-gutter-mobile) calc(72px + var(--safe-bottom));
+    padding: 18px var(--layout-gutter-mobile) var(--app-page-bottom-padding-mobile);
   }
 
   .moments-page .hero-title {

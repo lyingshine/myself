@@ -159,11 +159,11 @@ onUnmounted(() => {
 .admin-reports-page {
   max-width: var(--layout-max-width);
   margin: 0 auto;
-  padding: 24px var(--layout-gutter) calc(84px + var(--safe-bottom));
+  padding: 24px var(--layout-gutter) var(--app-page-bottom-xl);
 }
 
 .notice-banner {
-  margin-bottom: 12px;
+  margin-bottom: var(--app-gap-md);
   border-radius: 10px;
   border: 1px solid color-mix(in srgb, #c44536 30%, var(--color-border-light));
   background: color-mix(in srgb, #c44536 10%, var(--color-surface));
@@ -188,7 +188,7 @@ onUnmounted(() => {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--app-gap-md);
   padding: var(--panel-padding);
 }
 
@@ -204,7 +204,7 @@ onUnmounted(() => {
 }
 
 .back-link {
-  min-height: 34px;
+  min-height: var(--app-control-height-sm);
   padding: 0 12px;
   color: var(--color-text-secondary);
   display: inline-flex;
@@ -215,13 +215,13 @@ onUnmounted(() => {
   margin-top: 16px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--app-gap-xs);
   flex-wrap: wrap;
 }
 
 .filter-btn,
 .refresh-btn {
-  min-height: 34px;
+  min-height: var(--app-control-height-sm);
   padding: 0 12px;
   color: var(--color-text-secondary);
 }
@@ -231,9 +231,9 @@ onUnmounted(() => {
 }
 
 .list-section {
-  margin-top: 14px;
+  margin-top: var(--app-gap-lg);
   display: grid;
-  gap: 10px;
+  gap: var(--app-gap-sm);
 }
 
 .report-card {
@@ -244,7 +244,7 @@ onUnmounted(() => {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 10px;
+  gap: var(--app-gap-sm);
 }
 
 .report-title {
@@ -290,7 +290,7 @@ onUnmounted(() => {
 }
 
 .report-body {
-  margin-top: 10px;
+  margin-top: var(--app-gap-sm);
 }
 
 .report-body p {
@@ -301,15 +301,15 @@ onUnmounted(() => {
 }
 
 .report-actions {
-  margin-top: 12px;
+  margin-top: var(--app-gap-md);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--app-gap-xs);
   flex-wrap: wrap;
 }
 
 .action-btn {
-  min-height: 34px;
+  min-height: var(--app-control-height-sm);
   color: var(--color-text-secondary);
   padding: 0 10px;
   font-size: 12px;
@@ -324,7 +324,7 @@ onUnmounted(() => {
 }
 
 .jump-link {
-  min-height: 34px;
+  min-height: var(--app-control-height-sm);
   color: var(--color-text-secondary);
   padding: 0 10px;
   display: inline-flex;
@@ -341,7 +341,7 @@ onUnmounted(() => {
 
 @media (max-width: 768px) {
   .admin-reports-page {
-    padding: 18px var(--layout-gutter-mobile) calc(84px + var(--safe-bottom));
+    padding: 18px var(--layout-gutter-mobile) calc(var(--app-page-bottom-padding-mobile) + 8px);
   }
 
   .page-header {
